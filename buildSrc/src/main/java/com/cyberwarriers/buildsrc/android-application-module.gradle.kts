@@ -31,3 +31,14 @@ android {
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.jvmTarget = Config.jvmTarget
 }
+
+val libs: VersionCatalog = extensions.getByType<VersionCatalogsExtension>().named("libs")
+
+dependencies {
+    // Hilt
+    implementation(libs.getLibrary("hilt.android"))
+    ksp(libs.getLibrary("hilt.compiler"))
+
+    // Coroutines
+    implementation(libs.getLibrary("coroutines.android"))
+}
