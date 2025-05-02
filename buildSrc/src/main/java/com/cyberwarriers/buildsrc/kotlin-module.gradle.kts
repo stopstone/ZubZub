@@ -1,3 +1,4 @@
+import gradle.kotlin.dsl.accessors._8e8a6dd48b2094ffcd3758431423791d.implementation
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -12,4 +13,12 @@ java {
 
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.jvmTarget = Config.jvmTarget
+}
+
+val libs: VersionCatalog = extensions.getByType<VersionCatalogsExtension>().named("libs")
+dependencies {
+    implementation(libs.getLibrary("hilt.core"))
+    ksp(libs.getLibrary("hilt.compiler"))
+
+    implementation(libs.getLibrary("coroutines.core"))
 }
