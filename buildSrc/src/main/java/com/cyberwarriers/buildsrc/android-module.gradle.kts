@@ -26,10 +26,6 @@ extensions.configure<LibraryExtension> {
     kotlinOptions {
         jvmTarget = Config.jvmTarget
     }
-
-    buildFeatures {
-        compose = true
-    }
 }
 
 tasks.withType<KotlinCompile>().configureEach {
