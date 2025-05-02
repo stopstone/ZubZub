@@ -1,4 +1,6 @@
 import com.android.build.gradle.LibraryExtension
+import gradle.kotlin.dsl.accessors._8e8a6dd48b2094ffcd3758431423791d.implementation
+import gradle.kotlin.dsl.accessors._8e8a6dd48b2094ffcd3758431423791d.ksp
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -32,4 +34,14 @@ extensions.configure<LibraryExtension> {
 
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.jvmTarget = Config.jvmTarget
+}
+
+val libs: VersionCatalog = extensions.getByType<VersionCatalogsExtension>().named("libs")
+dependencies {
+    // Hilt
+    implementation(libs.getLibrary("hilt.android"))
+    ksp(libs.getLibrary("hilt.compiler"))
+
+    // Coroutines
+    implementation(libs.getLibrary("coroutines.android"))
 }
