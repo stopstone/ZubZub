@@ -8,6 +8,16 @@ android {
 }
 
 dependencies {
+    // 모듈 의존성
+    implementation(project(":core:ui"))
+    implementation(project(":core:util"))
+    implementation(project(":core:navigation"))
+    implementation(project(":feature:splash"))
+    implementation(project(":feature:auth"))
+
+    // 네비게이션
+    implementation(libs.androidx.navigation)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
