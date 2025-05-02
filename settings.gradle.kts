@@ -16,3 +16,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "ZubZub"
 include(":app")
+include(":feature:splash")
+include(":core:util")
