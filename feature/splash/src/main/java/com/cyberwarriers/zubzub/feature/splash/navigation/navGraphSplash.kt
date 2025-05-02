@@ -7,11 +7,11 @@ import com.cyberwarriers.zubzub.core.navigation.Route
 import com.cyberwarriers.zubzub.feature.splash.presentation.ui.SplashScreen
 
 fun NavGraphBuilder.navGraphSplash(navController: NavController) {
-    composable(route = Route.Splash.ROUTE) {
+    composable(route = Route.Splash) {
         SplashScreen(
             onNavigateToLogin = {
-                navController.navigate(Route.Auth.LOGIN) {
-                    popUpTo(Route.Splash.ROUTE) { inclusive = true }
+                navController.navigate(Route.Login) {
+                    popUpTo(Route.Splash) { inclusive = true }
                 }
             }
         )
