@@ -32,6 +32,14 @@ dependencies {
     // ViewModel
     implementation(libs.lifecycle.viewmodel.ktx)
     implementation(libs.lifecycle.viewmodel.compose)
+
     // Navigation
     implementation(libs.androidx.navigation)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    // Kakao Auth
+    implementation(libs.v2.user)
+
+    // DataStore
+    implementation(libs.androidx.datastore.preferences)
 }
