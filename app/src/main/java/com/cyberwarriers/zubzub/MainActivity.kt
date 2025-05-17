@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import com.cyberwarriers.zubzub.core.navigation.Route
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.feature.auth.navigation.navGraphAuth
+import com.cyberwarriers.zubzub.feature.main.navigation.navGraphMain
 import com.cyberwarriers.zubzub.feature.splash.navigation.navGraphSplash
 
 class MainActivity : ComponentActivity() {
@@ -33,5 +34,6 @@ fun ZubZubApp() {
     ) {
         navGraphSplash(navController)
         navGraphAuth(navController)
+        navGraphMain(navController)
     }
 }
