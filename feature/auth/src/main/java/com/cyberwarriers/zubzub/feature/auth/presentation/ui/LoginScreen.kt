@@ -55,12 +55,15 @@ fun LoginScreen(
         }
     }
 
-    LoginContent()
+    LoginContent(
+        onLoginClick = onNavigateToHome,
+    )
 }
 
 @Composable
 fun LoginContent(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onLoginClick: () -> Unit,
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -94,7 +97,7 @@ fun LoginContent(
                     .padding(horizontal = 16.dp)
                     .height(56.dp),
                 shape = RoundedCornerShape(8.dp),
-                onClick = {},
+                onClick = onLoginClick,
             ) {
                 Text(
                     text = "로그인하기",
@@ -110,6 +113,8 @@ fun LoginContent(
 @Composable
 fun LoginContentPreview() {
     ZubZubTheme {
-        LoginContent()
+        LoginContent(
+            onLoginClick = {},
+        )
     }
 }
