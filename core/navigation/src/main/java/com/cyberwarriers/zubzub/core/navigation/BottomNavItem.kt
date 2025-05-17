@@ -29,4 +29,8 @@ sealed class BottomNavItem(
         label = "Third",
     )
 
+    companion object {
+        val items = listOf(Home, Second, Third)
+    }
+
 }
