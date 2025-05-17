@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":core:navigation"))
     implementation(project(":feature:splash"))
     implementation(project(":feature:auth"))
+    implementation(project(":feature:main"))
 
     // 네비게이션
     implementation(libs.androidx.navigation)
