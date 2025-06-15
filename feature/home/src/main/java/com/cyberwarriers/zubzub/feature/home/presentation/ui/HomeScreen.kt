@@ -1,23 +1,28 @@
 package com.cyberwarriers.zubzub.feature.home.presentation.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubTopAppBar
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
-import com.cyberwarriers.zubzub.feature.home.R
-import com.cyberwarriers.zubzub.feature.home.presentation.ui.components.GroupCard
+import com.cyberwarriers.zubzub.feature.home.presentation.ui.components.GroupActionCards
+import com.cyberwarriers.zubzub.feature.home.presentation.ui.components.MyGroupItem
 
 @Composable
 fun HomeScreen() {
@@ -25,7 +30,7 @@ fun HomeScreen() {
         modifier = Modifier.fillMaxSize(),
         color = Color.White
     ) {
-        Column (
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
@@ -34,25 +39,42 @@ fun HomeScreen() {
                 title = "홈"
             )
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                GroupCard(
-                    onClick = {},
-                    modifier = Modifier.weight(1f),
-                    cardText = "그룹 생성",
-                    cardImageRes = R.drawable.ic_add,
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                GroupCard(
-                    onClick = {},
-                    modifier = Modifier.weight(1f),
-                    cardText = "그룹 입장",
-                    cardImageRes = R.drawable.ic_enter,
-                )
-            }
+            GroupActionCards(
+                onCreateGroupClick = { },
+                onEnterGroupClick = { },
+            )
+
+            MyGroupList()
+        }
+    }
+}
+
+@Composable
+private fun MyGroupList(
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = "나의 장바구니 그룹",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+        )
+
+        Text(
+            text = "모두 보기",
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.align(Alignment.Bottom)
+        )
+    }
+
+    LazyColumn {
+        item {
+            MyGroupItem()
         }
     }
 }
@@ -62,5 +84,13 @@ fun HomeScreen() {
 fun HomeScreenPreview() {
     ZubZubTheme {
         HomeScreen()
+    }
+}
+
+@Preview
+@Composable
+fun MyGroupItemPreview() {
+    ZubZubTheme {
+        MyGroupItem()
     }
 }
