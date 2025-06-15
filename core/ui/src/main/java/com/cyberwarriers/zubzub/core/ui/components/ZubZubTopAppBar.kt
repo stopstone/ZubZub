@@ -1,5 +1,6 @@
 package com.cyberwarriers.zubzub.core.ui.components
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -13,7 +14,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.foundation.layout.RowScope
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,7 +22,7 @@ fun ZubZubTopAppBar(
     modifier: Modifier = Modifier,
     navigationIcon: ImageVector? = null,
     onNavigationClick: (() -> Unit)? = null,
-    actions: @Composable RowScope.() -> Unit = {},
+    actions: @Composable (RowScope.() -> Unit)? = null,
     containerColor: Color = Color.White,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
@@ -33,7 +33,7 @@ fun ZubZubTopAppBar(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 fontWeight = FontWeight.Bold,
-                color = titleColor,
+                color = titleColor
             )
         },
         navigationIcon = {
@@ -46,10 +46,10 @@ fun ZubZubTopAppBar(
                 }
             }
         },
-        actions = actions,
+        actions = actions ?: {},
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = containerColor,
-            titleContentColor = titleColor,
+            titleContentColor = titleColor
         ),
         modifier = modifier
     )
