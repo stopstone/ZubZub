@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.cyberwarriers.zubzub.feature.auth"
+    namespace = "com.cyberwarriers.zubzub.feature.home"
 }
 
 dependencies {
