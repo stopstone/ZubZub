@@ -2,10 +2,10 @@ package com.cyberwarriers.zubzub.feature.home.presentation.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -35,7 +35,6 @@ fun GroupCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(98.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
@@ -45,23 +44,25 @@ fun GroupCard(
             defaultElevation = 4.dp
         )
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.Top
+                .padding(16.dp)
         ) {
             Image(
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier
+                    .size(48.dp)
+                    .align(Alignment.TopStart),
                 painter = painterResource(cardImageRes),
                 contentDescription = null,
             )
-            Spacer(modifier = Modifier.size(14.dp))
             Text(
                 text = cardText,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.align(Alignment.Top)
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(top = 52.dp)
             )
         }
     }
@@ -70,7 +71,7 @@ fun GroupCard(
 @Preview
 @Composable
 fun GroupCardPreview() {
-    ZubZubTheme { 
+    ZubZubTheme {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
