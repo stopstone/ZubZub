@@ -3,15 +3,21 @@ package com.cyberwarriers.zubzub.feature.auth.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cyberwarriers.zubzub.core.util.logd
+import com.cyberwarriers.zubzub.feature.auth.domain.usecase.SignInWithGoogleUseCase
 import com.cyberwarriers.zubzub.feature.auth.presentation.effect.LoginEffect
 import com.cyberwarriers.zubzub.feature.auth.presentation.state.LoginState
-import kotlinx.coroutines.delay
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class LoginViewModel : ViewModel() {
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
+) : ViewModel() {
 
     private val _state = MutableStateFlow<LoginState>(LoginState.Initial)
     val state: StateFlow<LoginState> = _state.asStateFlow()
@@ -23,28 +29,22 @@ class LoginViewModel : ViewModel() {
         logd("LoginViewModel 초기화")
     }
 
-    fun login(username: String, password: String) {
-        viewModelScope.launch {
-            // 이미 로딩 중이면 중복 요청 방지
-            if (state.value is LoginState.Loading) return@launch
+    fun signInWithGoogle(account: GoogleSignInAccount) = viewModelScope.launch {
+        if (_state.value is LoginState.Loading) return@launch
 
-            _state.value = LoginState.Loading
-            logd("로그인 시도: $username")
-
-            // 실제 로그인 로직은 여기에 구현 (지금은 mock)
-            delay(1500) // 로딩 시뮬레이션
-
-            // 간단한 검증 - 실제로는 API 호출 등을 통해 검증
-            if (username.isNotEmpty() && password.isNotEmpty()) {
+        _state.value = LoginState.Loading
+        logd("구글 소셜 로그인 시도")
+        signInWithGoogleUseCase(account)
+            .onSuccess {
                 _state.value = LoginState.Success
                 _effect.value = LoginEffect.NavigateToHome
-                logd("로그인 성공")
-            } else {
-                _state.value = LoginState.Error("아이디와 비밀번호를 입력해주세요")
-                _effect.value = LoginEffect.ShowLoginFailed
-                logd("로그인 실패: 입력 누락")
+                logd("로그인 성공: 홈 화면 이동")
             }
-        }
+            .onFailure { exception ->
+                _state.value = LoginState.Error(exception.message ?: "로그인에 실패하였습니다.")
+                _effect.value = LoginEffect.ShowLoginFailed
+                logd("구글 로그인 실패: ${exception.message}")
+            }
     }
 
     // effect를 처리한 후 null로 리셋
