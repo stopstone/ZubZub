@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     id("android-module")
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.google.gms.google.services)
 }
 
 // local.properties 파일에서 설정값 읽기
@@ -41,6 +42,7 @@ dependencies {
     implementation(libs.play.services.auth)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
 
     // 컴포즈 라이브러리
     implementation(libs.androidx.lifecycle.runtime.ktx)
