@@ -1,4 +1,3 @@
-import gradle.kotlin.dsl.accessors._8e8a6dd48b2094ffcd3758431423791d.implementation
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
