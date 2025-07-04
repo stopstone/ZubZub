@@ -12,7 +12,9 @@ import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.feature.auth.navigation.navGraphAuth
 import com.cyberwarriers.zubzub.feature.main.navigation.navGraphMain
 import com.cyberwarriers.zubzub.feature.splash.navigation.navGraphSplash
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
