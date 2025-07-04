@@ -1,5 +1,7 @@
 package com.cyberwarriers.zubzub.feature.auth.di
 
+import android.content.Context
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.cyberwarriers.zubzub.feature.auth.data.repository.AuthRepositoryImpl
 import com.cyberwarriers.zubzub.feature.auth.domain.repository.AuthRepository
@@ -7,6 +9,7 @@ import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -23,6 +26,12 @@ abstract class AuthModule {
     companion object {
         @Provides
         @Singleton
-        fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
+        fun provideFirebaseAuth(@ApplicationContext context: Context): FirebaseAuth {
+            // Firebase가 초기화되지 않았다면 초기화
+            if (FirebaseApp.getApps(context).isEmpty()) {
+                FirebaseApp.initializeApp(context)
+            }
+            return FirebaseAuth.getInstance()
+        }
     }
 }
