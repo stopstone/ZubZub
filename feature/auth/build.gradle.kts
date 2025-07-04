@@ -20,6 +20,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     // Firebase Auth
+    implementation(libs.play.services.auth)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
 
