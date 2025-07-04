@@ -28,13 +28,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.core.util.logd
+import com.cyberwarriers.zubzub.feature.auth.BuildConfig
 import com.cyberwarriers.zubzub.feature.auth.presentation.LoginViewModel
 import com.cyberwarriers.zubzub.feature.auth.presentation.effect.LoginEffect
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 
@@ -49,7 +48,7 @@ fun LoginScreen(
 
     val gso = remember {
         GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken("WEB_CLIENT_TOKEN")
+            .requestIdToken(BuildConfig.GOOGLE_WEB_CLIENT_ID)
             .requestEmail()
             .build()
     }
@@ -66,10 +65,15 @@ fun LoginScreen(
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
             try {
                 val account = task.getResult(ApiException::class.java)
-                account?.let { viewModel.signInWithGoogle(it) }
+                account?.let { 
+                    logd("Google 로그인 성공, 계정: ${account.email}")
+                    viewModel.signInWithGoogle(it) 
+                }
             } catch (e: ApiException) {
-                // Google Sign-In 실패 처리
+                logd("Google Sign-In 실패: ${e.statusCode}, ${e.message}")
             }
+        } else {
+            logd("Google Sign-In 취소됨")
         }
     }
 
@@ -82,6 +86,7 @@ fun LoginScreen(
             }
             LoginEffect.ShowLoginFailed -> {
                 // 에러 처리 (Toast 또는 Snackbar)
+                logd("로그인 실패 효과 처리됨")
                 viewModel.consumeEffect()
             }
             null -> { /* 효과 없음 */ }
@@ -89,7 +94,10 @@ fun LoginScreen(
     }
 
     LoginContent(
-        onLoginClick = { launcher.launch(googleSignInClient.signInIntent) },
+        onLoginClick = { 
+            logd("Google 로그인 버튼 클릭")
+            launcher.launch(googleSignInClient.signInIntent) 
+        },
     )
 }
 
