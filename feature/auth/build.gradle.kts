@@ -1,10 +1,28 @@
+import java.util.Properties
+
 plugins {
     id("android-module")
     alias(libs.plugins.compose.compiler)
 }
 
+// local.properties 파일에서 설정값 읽기
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
 android {
     namespace = "com.cyberwarriers.zubzub.feature.auth"
+    
+    buildFeatures {
+        buildConfig = true
+    }
+    
+    defaultConfig {
+        val googleWebClientId = localProperties.getProperty("GOOGLE_WEB_CLIENT_ID") ?: "DEFAULT_CLIENT_ID"
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
+    }
 }
 
 dependencies {
