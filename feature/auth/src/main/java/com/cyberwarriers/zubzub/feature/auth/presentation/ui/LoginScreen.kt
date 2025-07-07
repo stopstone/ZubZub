@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -20,14 +19,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.cyberwarriers.zubzub.core.ui.R
+import com.cyberwarriers.zubzub.core.ui.components.ZubZubCartIcon
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.core.util.logd
 import com.cyberwarriers.zubzub.feature.auth.BuildConfig
@@ -126,12 +122,7 @@ fun LoginContent(
                     .weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_logo_cart),
-                    contentDescription = "앱 로고",
-                    tint = Color.Unspecified,
-                    modifier = Modifier.alpha(0.8f),
-                )
+                ZubZubCartIcon()
             }
 
             GoogleSocialButton(
