@@ -83,9 +83,9 @@ fun GoogleSocialButton(
                     modifier = Modifier.size(18.dp),
                     tint = Color.Unspecified,
                 )
-            }
-
-            if (!isLoading) {
+                
+                Spacer(modifier = Modifier.width(12.dp))
+                
                 Text(
                     text = "Google 계정으로 로그인",
                     style = MaterialTheme.typography.bodyMedium.copy(
@@ -96,8 +96,6 @@ fun GoogleSocialButton(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-
-                Spacer(modifier = Modifier.width(12.dp))
             }
         }
     }
