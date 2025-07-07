@@ -80,11 +80,14 @@ fun LoginScreen(
                 onNavigateToHome()
                 viewModel.consumeEffect()
             }
+
             LoginEffect.ShowLoginFailed -> {
                 // 에러 처리 (Toast 또는 Snackbar)
                 viewModel.consumeEffect()
             }
-            null -> { /* 효과 없음 */ }
+
+            null -> { /* 효과 없음 */
+            }
         }
     }
 
