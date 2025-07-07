@@ -49,7 +49,7 @@ class AuthRepositoryImpl @Inject constructor(
                 if (existingUser == null) {
                     logd("새 사용자 - Firestore에 저장 시도: ${user.email}")
                     saveUserToFirestore(user).onFailure { error ->
-                        logd("⚠️ Firestore 저장 실패하지만 로그인은 계속: ${error.message}")
+                        logd("Firestore 저장 실패하지만 로그인은 계속: ${error.message}")
                     }
                 } else {
                     logd("기존 사용자 - 마지막 로그인 시간 업데이트: ${existingUser.email}")
@@ -58,7 +58,7 @@ class AuthRepositoryImpl @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                logd("⚠️ Firestore 작업 중 예외 발생하지만 로그인은 계속: ${e.message}")
+                logd("Firestore 작업 중 예외 발생하지만 로그인은 계속: ${e.message}")
             }
         }
         
