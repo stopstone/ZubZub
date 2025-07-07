@@ -30,6 +30,7 @@ import com.cyberwarriers.zubzub.feature.auth.BuildConfig
 import com.cyberwarriers.zubzub.feature.auth.presentation.LoginViewModel
 import com.cyberwarriers.zubzub.feature.auth.presentation.components.GoogleSocialButton
 import com.cyberwarriers.zubzub.feature.auth.presentation.effect.LoginEffect
+import com.cyberwarriers.zubzub.feature.auth.presentation.state.LoginState
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -98,6 +99,7 @@ fun LoginScreen(
             logd("Google 로그인 버튼 클릭")
             launcher.launch(googleSignInClient.signInIntent)
         },
+        isLoading = state is LoginState.Loading,
     )
 }
 
@@ -105,6 +107,7 @@ fun LoginScreen(
 fun LoginContent(
     modifier: Modifier = Modifier,
     onLoginClick: () -> Unit,
+    isLoading: Boolean,
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -128,7 +131,7 @@ fun LoginContent(
             GoogleSocialButton(
                 onClick = onLoginClick,
                 enabled = true,
-                isLoading = false,
+                isLoading = isLoading,
             )
 
             Spacer(modifier.size(104.dp))
@@ -142,6 +145,7 @@ fun LoginContentPreview() {
     ZubZubTheme {
         LoginContent(
             onLoginClick = {},
+            isLoading = false,
         )
     }
 }
