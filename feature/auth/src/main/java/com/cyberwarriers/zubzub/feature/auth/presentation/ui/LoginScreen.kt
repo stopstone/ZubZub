@@ -5,15 +5,14 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -21,17 +20,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.cyberwarriers.zubzub.core.ui.R
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.core.util.logd
 import com.cyberwarriers.zubzub.feature.auth.BuildConfig
 import com.cyberwarriers.zubzub.feature.auth.presentation.LoginViewModel
+import com.cyberwarriers.zubzub.feature.auth.presentation.components.GoogleSocialButton
 import com.cyberwarriers.zubzub.feature.auth.presentation.effect.LoginEffect
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -65,9 +66,9 @@ fun LoginScreen(
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
             try {
                 val account = task.getResult(ApiException::class.java)
-                account?.let { 
+                account?.let {
                     logd("Google 로그인 성공, 계정: ${account.email}")
-                    viewModel.signInWithGoogle(it) 
+                    viewModel.signInWithGoogle(it)
                 }
             } catch (e: ApiException) {
                 logd("Google Sign-In 실패: ${e.statusCode}, ${e.message}")
@@ -84,19 +85,22 @@ fun LoginScreen(
                 onNavigateToHome()
                 viewModel.consumeEffect()
             }
+
             LoginEffect.ShowLoginFailed -> {
                 // 에러 처리 (Toast 또는 Snackbar)
                 logd("로그인 실패 효과 처리됨")
                 viewModel.consumeEffect()
             }
-            null -> { /* 효과 없음 */ }
+
+            null -> { /* 효과 없음 */
+            }
         }
     }
 
     LoginContent(
-        onLoginClick = { 
+        onLoginClick = {
             logd("Google 로그인 버튼 클릭")
-            launcher.launch(googleSignInClient.signInIntent) 
+            launcher.launch(googleSignInClient.signInIntent)
         },
     )
 }
@@ -122,30 +126,21 @@ fun LoginContent(
                     .weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = "로그인",
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.primary
+                Icon(
+                    painter = painterResource(R.drawable.ic_logo_cart),
+                    contentDescription = "앱 로고",
+                    tint = Color.Unspecified,
+                    modifier = Modifier.alpha(0.8f),
                 )
             }
 
-            Button(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 32.dp)
-                    .padding(horizontal = 16.dp)
-                    .height(56.dp),
-                shape = RoundedCornerShape(8.dp),
+            GoogleSocialButton(
                 onClick = onLoginClick,
-            ) {
-                Text(
-                    text = "로그인하기",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
+                enabled = true,
+                isLoading = false,
+            )
+
+            Spacer(modifier.size(104.dp))
         }
     }
 }
