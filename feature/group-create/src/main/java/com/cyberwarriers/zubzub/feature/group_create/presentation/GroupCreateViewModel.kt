@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.cyberwarriers.zubzub.core.util.logd
 import com.cyberwarriers.zubzub.feature.group_create.presentation.state.GroupCreateUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,44 +40,9 @@ class GroupCreateViewModel @Inject constructor(
     fun onGroupNameChanged(name: String) {
         _uiState.value = _uiState.value.copy(
             groupName = name,
-            groupNameError = validateGroupName(name),
             isCreateButtonEnabled = _uiState.value.copy(groupName = name).isFormValid()
         )
         logd("그룹 이름 변경: $name")
-    }
-
-    /**
-     * 그룹 설명 입력 처리
-     */
-    fun onGroupDescriptionChanged(description: String) {
-        _uiState.value = _uiState.value.copy(
-            groupDescription = description,
-            groupDescriptionError = validateGroupDescription(description),
-            isCreateButtonEnabled = _uiState.value.copy(groupDescription = description).isFormValid()
-        )
-        logd("그룹 설명 변경: $description")
-    }
-
-    /**
-     * 그룹 비밀번호 입력 처리
-     */
-    fun onGroupPasswordChanged(password: String) {
-        _uiState.value = _uiState.value.copy(
-            groupPassword = password,
-            groupPasswordError = validateGroupPassword(password)
-        )
-        logd("그룹 비밀번호 변경")
-    }
-
-    /**
-     * 최대 멤버 수 입력 처리
-     */
-    fun onMaxMembersChanged(maxMembers: String) {
-        _uiState.value = _uiState.value.copy(
-            maxMembers = maxMembers,
-            maxMembersError = validateMaxMembers(maxMembers)
-        )
-        logd("최대 멤버 수 변경: $maxMembers")
     }
 
     /**
@@ -96,7 +62,7 @@ class GroupCreateViewModel @Inject constructor(
                 // createGroupUseCase.invoke(...)
 
                 // 임시로 2초 딜레이 후 성공 처리
-                kotlinx.coroutines.delay(2000)
+                delay(2000)
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -112,62 +78,6 @@ class GroupCreateViewModel @Inject constructor(
                 )
                 logd("그룹 생성 실패: ${e.message}")
             }
-        }
-    }
-
-    /**
-     * 다이얼로그 닫기
-     */
-    fun onDismissDialog() {
-        _uiState.value = _uiState.value.copy(
-            showSuccessDialog = false,
-            showErrorDialog = false,
-            errorMessage = ""
-        )
-    }
-
-    // ===========================================
-    // 입력 값 검증 함수들
-    // ===========================================
-
-    private fun validateGroupName(name: String): String {
-        return when {
-            name.isBlank() -> "그룹 이름을 입력해주세요."
-            name.length < 2 -> "그룹 이름은 2글자 이상이어야 합니다."
-            name.length > 20 -> "그룹 이름은 20글자 이하여야 합니다."
-            else -> ""
-        }
-    }
-
-    private fun validateGroupDescription(description: String): String {
-        return when {
-            description.isBlank() -> "그룹 설명을 입력해주세요."
-            description.length < 5 -> "그룹 설명은 5글자 이상이어야 합니다."
-            description.length > 100 -> "그룹 설명은 100글자 이하여야 합니다."
-            else -> ""
-        }
-    }
-
-    private fun validateGroupPassword(password: String): String {
-        return when {
-            password.isNotEmpty() && password.length < 4 -> "비밀번호는 4글자 이상이어야 합니다."
-            password.length > 10 -> "비밀번호는 10글자 이하여야 합니다."
-            else -> ""
-        }
-    }
-
-    private fun validateMaxMembers(maxMembers: String): String {
-        if (maxMembers.isEmpty()) return ""
-
-        return try {
-            val number = maxMembers.toInt()
-            when {
-                number < 2 -> "최소 2명 이상이어야 합니다."
-                number > 50 -> "최대 50명까지 가능합니다."
-                else -> ""
-            }
-        } catch (e: NumberFormatException) {
-            "숫자만 입력해주세요."
         }
     }
 }
