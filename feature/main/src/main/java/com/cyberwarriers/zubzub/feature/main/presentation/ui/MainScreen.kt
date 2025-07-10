@@ -31,7 +31,9 @@ import com.cyberwarriers.zubzub.core.util.logd
 import com.cyberwarriers.zubzub.feature.home.presentation.ui.HomeScreen
 
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    onNavigateToGroupCreate: () -> Unit = {},
+) {
     val navController = rememberNavController()
 
     Scaffold(
@@ -68,7 +70,9 @@ fun MainScreen() {
                 .padding(bottom = paddingValues.calculateBottomPadding())
         ) {
             composable(BottomNavItem.Home.route) {
-                HomeScreen()
+                HomeScreen(
+                    onNavigateToGroupCreate = onNavigateToGroupCreate
+                )
             }
 
             composable(BottomNavItem.Second.route) {

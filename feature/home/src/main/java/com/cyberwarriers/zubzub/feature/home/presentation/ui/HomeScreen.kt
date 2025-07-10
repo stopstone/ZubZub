@@ -25,7 +25,9 @@ import com.cyberwarriers.zubzub.feature.home.presentation.ui.components.GroupAct
 import com.cyberwarriers.zubzub.feature.home.presentation.ui.components.MyGroupItem
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onNavigateToGroupCreate: () -> Unit = {},
+) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color.White
@@ -40,7 +42,7 @@ fun HomeScreen() {
             )
 
             GroupActionCards(
-                onCreateGroupClick = { },
+                onCreateGroupClick = onNavigateToGroupCreate,
                 onEnterGroupClick = { },
             )
 
