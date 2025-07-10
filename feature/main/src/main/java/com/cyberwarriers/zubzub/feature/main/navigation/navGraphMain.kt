@@ -16,6 +16,11 @@ fun NavGraphBuilder.navGraphMain(navController: NavController) {
             logd("메인 화면 진입")
         }
         
-        MainScreen()
+        MainScreen(
+            onNavigateToGroupCreate = {
+                navController.navigate(Route.GroupCreate)
+                logd("그룹 생성 화면으로 이동")
+            }
+        )
     }
 }
