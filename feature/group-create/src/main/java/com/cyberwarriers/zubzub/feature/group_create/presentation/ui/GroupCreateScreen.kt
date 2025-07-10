@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubInputTextField
+import com.cyberwarriers.zubzub.core.ui.components.ZubZubSubmitButton
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubTopAppBar
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.feature.group_create.presentation.GroupCreateViewModel
@@ -68,12 +69,15 @@ fun GroupCreateScreen(
                 GroupCreateContent(
                     uiState = uiState,
                     onGroupNameChanged = viewModel::onGroupNameChanged,
-                    onGroupDescriptionChanged = viewModel::onGroupDescriptionChanged,
-                    onGroupPasswordChanged = viewModel::onGroupPasswordChanged,
-                    onMaxMembersChanged = viewModel::onMaxMembersChanged,
                     onCreateGroupClicked = viewModel::onCreateGroupClicked
                 )
             }
+
+            ZubZubSubmitButton(
+                text = "그룹 만들기",
+                onClick =viewModel::onCreateGroupClicked,
+                enable = uiState.isCreateButtonEnabled,
+            )
         }
     }
 }
@@ -82,9 +86,6 @@ fun GroupCreateScreen(
 private fun GroupCreateContent(
     uiState: GroupCreateUiState,
     onGroupNameChanged: (String) -> Unit,
-    onGroupDescriptionChanged: (String) -> Unit,
-    onGroupPasswordChanged: (String) -> Unit,
-    onMaxMembersChanged: (String) -> Unit,
     onCreateGroupClicked: () -> Unit,
 ) {
     Column(
