@@ -51,6 +51,13 @@ fun GroupCreateScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    // 그룹 생성 성공 시 화면 닫기
+    LaunchedEffect(uiState.navigateBack) {
+        if (uiState.navigateBack) {
+            onNavigatePop()
+        }
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color.White,
