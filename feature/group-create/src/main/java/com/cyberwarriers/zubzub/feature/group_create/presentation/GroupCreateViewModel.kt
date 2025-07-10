@@ -64,9 +64,9 @@ class GroupCreateViewModel @Inject constructor(
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    showSuccessDialog = true
+                    navigateBack = true,
                 )
-                logd("그룹 생성 성공")
+                logd("그룹 생성 성공 - 화면 닫기")
 
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
