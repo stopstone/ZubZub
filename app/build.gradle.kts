@@ -13,6 +13,8 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":core:util"))
     implementation(project(":core:navigation"))
+    implementation(project(":core:domain"))
+    implementation(project(":core:data"))
     implementation(project(":feature:splash"))
     implementation(project(":feature:auth"))
     implementation(project(":feature:main"))
