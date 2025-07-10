@@ -3,9 +3,9 @@ package com.cyberwarriers.zubzub.feature.group_create.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cyberwarriers.zubzub.core.util.logd
+import com.cyberwarriers.zubzub.core.domain.usecase.CreateGroupUseCase
 import com.cyberwarriers.zubzub.feature.group_create.presentation.state.GroupCreateUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,26 +16,24 @@ import javax.inject.Inject
  * 그룹 생성 화면의 ViewModel
  *
  * 역할:
- * - UI 상태 관리
- * - 입력 값 검증 (비즈니스 로직)
- * - 그룹 생성 비즈니스 로직 처리
- * - 에러 처리
+ * - UI 상태 관리  
+ * - UseCase 호출을 통한 비즈니스 로직 실행
+ * - UI 에러 처리
  */
 @HiltViewModel
 class GroupCreateViewModel @Inject constructor(
-    // 향후 UseCase 주입 예정
-    // private val createGroupUseCase: CreateGroupUseCase
+    private val createGroupUseCase: CreateGroupUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GroupCreateUiState())
     val uiState: StateFlow<GroupCreateUiState> = _uiState.asStateFlow()
 
     /**
-     * 그룹 이름 입력 처리
+     * 그룹 이름 입력 처리 (UI 검증만)
      */
     fun onGroupNameChanged(name: String) {
-        val error = validateGroupName(name)
-        val isValid = isFormValid(name, error)
+        val error = validateGroupNameForUI(name)
+        val isValid = name.isNotBlank() && error.isEmpty()
         
         _uiState.value = _uiState.value.copy(
             groupName = name,
@@ -50,7 +48,7 @@ class GroupCreateViewModel @Inject constructor(
      */
     fun onCreateGroupClicked() {
         val currentState = _uiState.value
-        if (!isFormValid(currentState.groupName, currentState.groupNameError)) {
+        if (currentState.groupName.isBlank() || currentState.groupNameError.isNotEmpty()) {
             logd("폼이 유효하지 않음")
             return
         }
@@ -59,22 +57,38 @@ class GroupCreateViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true)
 
             try {
-                // TODO: 실제 그룹 생성 로직 구현
-                delay(2000)
-
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    navigateBack = true,
+                // UseCase를 통해 그룹 생성 (비즈니스 로직 포함)
+                val result = createGroupUseCase(
+                    groupName = currentState.groupName,
+                    description = "", // 현재는 빈 문자열, 향후 입력 필드 추가 가능
+                    targetAmount = 0L // 현재는 0, 향후 목표 금액 설정 기능 추가 가능
                 )
-                logd("그룹 생성 성공 - 화면 닫기")
+
+                result.fold(
+                    onSuccess = { groupId ->
+                        logd("그룹 생성 성공: $groupId")
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            navigateBack = true,
+                        )
+                    },
+                    onFailure = { exception ->
+                        logd("그룹 생성 실패: ${exception.message}")
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            showErrorDialog = true,
+                            errorMessage = exception.message ?: "그룹 생성에 실패했습니다."
+                        )
+                    }
+                )
 
             } catch (e: Exception) {
+                logd("그룹 생성 예외 발생: ${e.message}")
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     showErrorDialog = true,
                     errorMessage = e.message ?: "그룹 생성에 실패했습니다."
                 )
-                logd("그룹 생성 실패: ${e.message}")
             }
         }
     }
@@ -91,25 +105,16 @@ class GroupCreateViewModel @Inject constructor(
     }
 
     // ===========================================
-    // 비즈니스 로직 (ViewModel 책임)
+    // UI 검증 로직 (ViewModel 책임)
     // ===========================================
 
     /**
-     * 폼 유효성 검사
-     * @param name 그룹 이름
-     * @param nameError 그룹 이름 에러 메시지
-     * @return 폼이 유효한지 여부
-     */
-    private fun isFormValid(name: String, nameError: String): Boolean {
-        return name.isNotBlank() && nameError.isEmpty()
-    }
-
-    /**
-     * 그룹 이름 검증
+     * UI용 그룹 이름 검증 (실시간 피드백용)
+     * 비즈니스 로직 검증은 UseCase에서 처리
      * @param name 검증할 그룹 이름
      * @return 에러 메시지 (유효하면 빈 문자열)
      */
-    private fun validateGroupName(name: String): String {
+    private fun validateGroupNameForUI(name: String): String {
         return when {
             name.isBlank() -> "그룹 이름을 입력해주세요."
             name.length < 2 -> "그룹 이름은 2글자 이상이어야 합니다."
