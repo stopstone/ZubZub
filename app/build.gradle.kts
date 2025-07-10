@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":feature:splash"))
     implementation(project(":feature:auth"))
     implementation(project(":feature:main"))
+    implementation(project(":feature:group-create"))
 
     // Firebase
     implementation(platform(libs.firebase.bom))
