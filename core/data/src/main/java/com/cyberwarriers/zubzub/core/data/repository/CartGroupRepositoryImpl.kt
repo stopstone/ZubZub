@@ -1,22 +1,21 @@
 package com.cyberwarriers.zubzub.core.data.repository
 
-import com.cyberwarriers.zubzub.core.util.logd
 import com.cyberwarriers.zubzub.core.data.mapper.createCartGroupEntity
 import com.cyberwarriers.zubzub.core.data.mapper.createOwnerMember
 import com.cyberwarriers.zubzub.core.data.mapper.toSummary
 import com.cyberwarriers.zubzub.core.data.model.CartGroupFirebaseEntity
 import com.cyberwarriers.zubzub.core.domain.model.CartGroupSummary
 import com.cyberwarriers.zubzub.core.domain.repository.CartGroupRepository
+import com.cyberwarriers.zubzub.core.util.logd
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query.Direction.DESCENDING
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.channels.awaitClose
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.math.log
 
 @Singleton
 class CartGroupRepositoryImpl @Inject constructor(
@@ -93,15 +92,15 @@ class CartGroupRepositoryImpl @Inject constructor(
         }
         
         val userId = currentUser.uid
-        logd("🔥 실시간 그룹 목록 리스너 등록: $userId")
+        logd("실시간 그룹 목록 리스너 등록: $userId")
         
-        // 🔥 Firebase 실시간 리스너 등록
+        // Firebase 실시간 리스너 등록
         val listener = firestore.collection(CART_GROUPS_COLLECTION)
             .whereArrayContains("memberIds", userId)
             .orderBy("updatedAt", DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    logd("❌ 실시간 그룹 목록 에러: ${error.message}")
+                    logd("실시간 그룹 목록 에러: ${error.message}")
                     trySend(emptyList())
                     return@addSnapshotListener
                 }
@@ -118,12 +117,12 @@ class CartGroupRepositoryImpl @Inject constructor(
                         }
                     }
                     
-                    logd("🚀 실시간 그룹 업데이트: ${groups.size}개")
+                    logd("실시간 그룹 업데이트: ${groups.size}개")
                     trySend(groups)
                 }
             }
         
-        // 🧹 리스너 정리 (Flow 종료시 자동 호출)
+        // 리스너 정리 (Flow 종료시 자동 호출)
         awaitClose {
             logd("🧹 실시간 그룹 목록 리스너 해제")
             listener.remove()
