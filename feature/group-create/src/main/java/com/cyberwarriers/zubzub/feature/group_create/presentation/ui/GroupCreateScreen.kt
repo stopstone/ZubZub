@@ -68,17 +68,18 @@ fun GroupCreateScreen(
                 .fillMaxSize()
                 .statusBarsPadding(),
         ) {
-            // 상단 앱바
-            ZubZubTopAppBar(
-                title = "그룹 생성",
-                navigationIcon = Icons.Default.Close,
-                onNavigationClick = onNavigatePop,
-            )
 
             // 메인 컨텐츠
             if (uiState.isLoading) {
                 LoadingContent()
             } else {
+                // 상단 앱바
+                ZubZubTopAppBar(
+                    title = "그룹 생성",
+                    navigationIcon = Icons.Default.Close,
+                    onNavigationClick = onNavigatePop,
+                )
+
                 GroupCreateContent(
                     uiState = uiState,
                     onGroupNameChanged = viewModel::onGroupNameChanged,
