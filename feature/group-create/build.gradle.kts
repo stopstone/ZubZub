@@ -16,6 +16,8 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":core:util"))
     implementation(project(":core:navigation"))
+    implementation(project(":core:domain"))
+    implementation(project(":core:data"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -25,7 +27,9 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     // Firebase
+    implementation(libs.play.services.auth)
     implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
 
     // 컴포즈 라이브러리
