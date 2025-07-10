@@ -7,12 +7,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -119,25 +119,18 @@ private fun GroupCreateContent(
             onValueChange = onGroupNameChanged,
             label = "그룹명",
             errorMessage = uiState.groupNameError,
+            isError = uiState.groupNameError.isNotEmpty(),
             modifier = Modifier.fillMaxWidth(),
         )
 
-        Spacer(modifier = Modifier.padding(vertical = 24.dp))
+        Spacer(modifier = Modifier.size(48.dp))
 
         // 그룹 생성 버튼
-        Button(
+        ZubZubSubmitButton(
+            text = "그룹 만들기",
             onClick = onCreateGroupClicked,
-            enabled = uiState.isCreateButtonEnabled,
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            Text(
-                text = "그룹 생성하기",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(vertical = 4.dp)
-            )
-        }
+            enable = uiState.isCreateButtonEnabled,
+        )
     }
 }
 
