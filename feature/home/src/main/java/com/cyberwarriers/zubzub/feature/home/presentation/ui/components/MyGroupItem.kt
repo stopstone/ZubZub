@@ -27,8 +27,6 @@ import androidx.compose.ui.unit.dp
 import com.cyberwarriers.zubzub.core.domain.model.CartGroupSummary
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.feature.home.R
-import java.text.NumberFormat
-import java.util.Locale
 
 @Composable
 fun MyGroupItem(
