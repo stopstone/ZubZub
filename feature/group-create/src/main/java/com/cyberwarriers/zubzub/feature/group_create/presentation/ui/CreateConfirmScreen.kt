@@ -87,7 +87,7 @@ fun CreateConfirmScreen(
 
             Spacer(modifier = Modifier.size(24.dp))
 
-            inviteCopyField(groupId = groupId)
+            InviteCopyField(groupId = groupId)
 
             Spacer(modifier = Modifier.weight(1f))
 
@@ -102,7 +102,7 @@ fun CreateConfirmScreen(
 }
 
 @Composable
-private fun inviteCopyField(groupId: String) {
+private fun InviteCopyField(groupId: String) {
     val interactionSource = remember { MutableInteractionSource() }
 
     OutlinedTextField(
@@ -151,6 +151,16 @@ fun CreateConfirmScreenPreview() {
         CreateConfirmScreen(
             onNavigateToHome = {},
             onBackPressed = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun InviteCopyFieldPreview() {
+    ZubZubTheme {
+        InviteCopyField(
+            "asdasdasasdasdasasdasdasasdasdasasdasdaasdsadsadsads"
         )
     }
 }
