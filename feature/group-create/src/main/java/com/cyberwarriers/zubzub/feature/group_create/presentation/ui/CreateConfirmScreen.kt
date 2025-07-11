@@ -106,7 +106,7 @@ fun CreateConfirmScreen(
                     onClick = onNavigateToHome,
                 )
                 
-                Spacer(modifier = Modifier.size(56.dp))
+                Spacer(modifier = Modifier.size(128.dp))
             }
         }
     }
