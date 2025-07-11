@@ -1,6 +1,9 @@
 package com.cyberwarriers.zubzub.feature.group_create.presentation.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -16,33 +21,44 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubSubmitButton
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.feature.group_create.R
+import com.cyberwarriers.zubzub.feature.group_create.presentation.CreateConfirmViewModel
 
 @Composable
-fun CreateConfirmScreen() {
-    // 텍스트 필드 상태 관리
-    var textValue by remember { mutableStateOf("") }
+fun CreateConfirmScreen(
+    onNavigateToHome: () -> Unit = {},
+    onBackPressed: () -> Unit = {},
+    viewModel: CreateConfirmViewModel = hiltViewModel(),
+) {
+    val groupId by viewModel.groupId.collectAsState()
+    
+    BackHandler {
+        onBackPressed()
+    }
 
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 16.dp)
+            .systemBarsPadding(),
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -71,13 +87,13 @@ fun CreateConfirmScreen() {
 
             Spacer(modifier = Modifier.size(24.dp))
 
-            inviteCopyField()
+            inviteCopyField(groupId = groupId)
 
             Spacer(modifier = Modifier.weight(1f))
 
             ZubZubSubmitButton(
                 text = "완료",
-                onClick = {},
+                onClick = onNavigateToHome, // 홈화면으로 이동
             )
             
             Spacer(modifier = Modifier.size(56.dp))
@@ -86,17 +102,24 @@ fun CreateConfirmScreen() {
 }
 
 @Composable
-private fun inviteCopyField() {
+private fun inviteCopyField(groupId: String) {
+    val interactionSource = remember { MutableInteractionSource() }
+
     OutlinedTextField(
-        value = "ZUBZUB-2024-001",
+        value = groupId,
         onValueChange = { },
         enabled = false,
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
         readOnly = true,
         singleLine = true,
         shape = RoundedCornerShape(8.dp),
         label = { Text("그룹 초대 코드") },
+        keyboardOptions = KeyboardOptions.Default.copy(
+            imeAction = ImeAction.None
+        ),
+        interactionSource = interactionSource,
         trailingIcon = {
             Button(
                 onClick = {
@@ -125,6 +148,9 @@ private fun inviteCopyField() {
 @Composable
 fun CreateConfirmScreenPreview() {
     ZubZubTheme {
-        CreateConfirmScreen()
+        CreateConfirmScreen(
+            onNavigateToHome = {},
+            onBackPressed = {}
+        )
     }
 }
