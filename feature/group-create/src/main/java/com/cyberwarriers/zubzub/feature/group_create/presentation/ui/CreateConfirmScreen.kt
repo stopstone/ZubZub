@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,17 +19,22 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -40,6 +46,7 @@ import com.cyberwarriers.zubzub.core.ui.components.ZubZubSubmitButton
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.feature.group_create.R
 import com.cyberwarriers.zubzub.feature.group_create.presentation.CreateConfirmViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun CreateConfirmScreen(
@@ -48,70 +55,76 @@ fun CreateConfirmScreen(
     viewModel: CreateConfirmViewModel = hiltViewModel(),
 ) {
     val groupId by viewModel.groupId.collectAsState()
-    
+
     BackHandler {
         onBackPressed()
     }
 
-    Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 16.dp)
-            .systemBarsPadding(),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+    Box(modifier = Modifier.fillMaxSize()) {
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 16.dp)
+                .systemBarsPadding(),
         ) {
-            
-            Spacer(modifier = Modifier.weight(1f)) // 상단 여백 자동 조정
-            
-            Image(
-                modifier = Modifier.size(192.dp),
-                colorFilter = ColorFilter.tint(Color(0xFF388E3C)),
-                painter = painterResource(R.drawable.ic_check_circle_48px),
-                contentDescription = "그룹 생성 성공",
-            )
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                
+                Spacer(modifier = Modifier.weight(1f))
+                
+                Image(
+                    modifier = Modifier.size(192.dp),
+                    colorFilter = ColorFilter.tint(Color(0xFF388E3C)),
+                    painter = painterResource(R.drawable.ic_check_circle_48px),
+                    contentDescription = "그룹 생성 성공",
+                )
 
-            Spacer(modifier = Modifier.size(12.dp))
+                Spacer(modifier = Modifier.size(12.dp))
 
-            Text(
-                text = "코드를 복사해서\n멤버들을 초대해보세요!",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                lineHeight = 32.sp,
-            )
+                Text(
+                    text = "코드를 복사해서\n멤버들을 초대해보세요!",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 32.sp,
+                )
 
-            Spacer(modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.size(24.dp))
 
-            InviteCopyField(groupId = groupId)
+                InviteCopyField(
+                    groupId = groupId,
+                )
 
-            Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.weight(1f))
 
-            ZubZubSubmitButton(
-                text = "완료",
-                onClick = onNavigateToHome, // 홈화면으로 이동
-            )
-            
-            Spacer(modifier = Modifier.size(56.dp))
+                ZubZubSubmitButton(
+                    text = "완료",
+                    onClick = onNavigateToHome,
+                )
+                
+                Spacer(modifier = Modifier.size(56.dp))
+            }
         }
     }
 }
 
 @Composable
-private fun InviteCopyField(groupId: String) {
+private fun InviteCopyField(
+    groupId: String,
+) {
     val interactionSource = remember { MutableInteractionSource() }
+    val clipboardManager = LocalClipboardManager.current
+    val coroutineScope = rememberCoroutineScope()
 
     OutlinedTextField(
         value = groupId,
         onValueChange = { },
         enabled = false,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth(),
         readOnly = true,
         singleLine = true,
         shape = RoundedCornerShape(8.dp),
@@ -123,7 +136,9 @@ private fun InviteCopyField(groupId: String) {
         trailingIcon = {
             Button(
                 onClick = {
-                    // TODO: 클립보드에 복사 로직
+                    coroutineScope.launch {
+                        clipboardManager.setText(AnnotatedString(groupId))
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF388E3C),
@@ -158,9 +173,12 @@ fun CreateConfirmScreenPreview() {
 @Preview(showBackground = true)
 @Composable
 fun InviteCopyFieldPreview() {
+
     ZubZubTheme {
-        InviteCopyField(
-            "asdasdasasdasdasasdasdasasdasdasasdasdaasdsadsadsads"
-        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            InviteCopyField(
+                groupId = "asdasdasasdasdasasdasdasasdasdasasdasdaasdsadsadsads",
+            )
+        }
     }
 }
