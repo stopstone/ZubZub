@@ -28,3 +28,4 @@ include(":feature:main")
 include(":feature:home")
 include(":feature:group-create")
 
+include(":feature:group-enter")

@@ -20,6 +20,7 @@ dependencies {
     implementation(project(":feature:main"))
     implementation(project(":feature:home"))
     implementation(project(":feature:group-create"))
+    implementation(project(":feature:group-enter"))
 
     // Firebase
     implementation(platform(libs.firebase.bom))
