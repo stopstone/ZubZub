@@ -2,8 +2,8 @@ package com.cyberwarriers.zubzub.feature.group_create.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cyberwarriers.zubzub.core.util.logd
 import com.cyberwarriers.zubzub.core.domain.usecase.CreateGroupUseCase
+import com.cyberwarriers.zubzub.core.util.logd
 import com.cyberwarriers.zubzub.feature.group_create.presentation.state.GroupCreateUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,11 +57,10 @@ class GroupCreateViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true)
 
             try {
-                // UseCase를 통해 그룹 생성 (비즈니스 로직 포함)
                 val result = createGroupUseCase(
                     groupName = currentState.groupName,
-                    description = "", // 현재는 빈 문자열, 향후 입력 필드 추가 가능
-                    targetAmount = 0L // 현재는 0, 향후 목표 금액 설정 기능 추가 가능
+                    description = "",
+                    targetAmount = 0L,
                 )
 
                 result.fold(
@@ -69,7 +68,8 @@ class GroupCreateViewModel @Inject constructor(
                         logd("그룹 생성 성공: $groupId")
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            navigateBack = true,
+                            groupId = groupId,
+                            navigateToConfirm = true,
                         )
                     },
                     onFailure = { exception ->
@@ -101,6 +101,15 @@ class GroupCreateViewModel @Inject constructor(
             showSuccessDialog = false,
             showErrorDialog = false,
             errorMessage = ""
+        )
+    }
+
+    /**
+     * 네비게이션 상태 리셋
+     */
+    fun onNavigationHandled() {
+        _uiState.value = _uiState.value.copy(
+            navigateToConfirm = false
         )
     }
 

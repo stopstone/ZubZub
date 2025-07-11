@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -16,7 +16,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,14 +45,22 @@ import com.cyberwarriers.zubzub.feature.group_create.presentation.state.GroupCre
 @Composable
 fun GroupCreateScreen(
     onNavigatePop: () -> Unit = {},
+    onNavigateToConfirm: (String) -> Unit = {},
     viewModel: GroupCreateViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusRequester = remember { FocusRequester() }
 
-    // 그룹 생성 성공 시 화면 닫기
-    LaunchedEffect(uiState.navigateBack) {
-        if (uiState.navigateBack) {
-            onNavigatePop()
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+        keyboardController?.show()
+    }
+
+    LaunchedEffect(uiState.navigateToConfirm) {
+        if (uiState.navigateToConfirm) {
+            onNavigateToConfirm(uiState.groupId)
+            viewModel.onNavigationHandled()
         }
     }
 
@@ -64,7 +71,7 @@ fun GroupCreateScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .statusBarsPadding(),
+                .systemBarsPadding(),
         ) {
 
             // 메인 컨텐츠
@@ -79,16 +86,23 @@ fun GroupCreateScreen(
 
                 GroupCreateContent(
                     uiState = uiState,
+                    focusRequester = focusRequester,
                     onGroupNameChanged = viewModel::onGroupNameChanged,
                     onCreateGroupClicked = viewModel::onCreateGroupClicked
                 )
             }
 
-            ZubZubSubmitButton(
-                text = "그룹 만들기",
-                onClick = viewModel::onCreateGroupClicked,
-                enable = uiState.isCreateButtonEnabled,
-            )
+            // 하단 버튼
+            if (!uiState.isLoading) {
+                ZubZubSubmitButton(
+                    text = "그룹 만들기",
+                    onClick = {
+                        keyboardController?.hide()
+                        viewModel.onCreateGroupClicked()
+                    },
+                    enable = uiState.isCreateButtonEnabled,
+                )
+            }
         }
     }
 }
@@ -96,26 +110,10 @@ fun GroupCreateScreen(
 @Composable
 private fun GroupCreateContent(
     uiState: GroupCreateUiState,
+    focusRequester: FocusRequester,
     onGroupNameChanged: (String) -> Unit,
     onCreateGroupClicked: () -> Unit,
 ) {
-    // 포커스 요청을 위한 FocusRequester
-    val focusRequester = remember { FocusRequester() }
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    // 화면 진입 시 자동 포커스 및 키보드 올리기
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-        keyboardController?.show()
-    }
-
-    // 화면 나갈 때 키보드 숨기기
-    DisposableEffect(Unit) {
-        onDispose {
-            keyboardController?.hide()
-        }
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()

@@ -16,5 +16,7 @@ data class GroupCreateUiState(
     val showSuccessDialog: Boolean = false,
     val showErrorDialog: Boolean = false,
     val errorMessage: String = "",
-    val navigateBack: Boolean = false,
-) 
+    val navigateToConfirm: Boolean = false,
+
+    val groupId: String = "",
+)
