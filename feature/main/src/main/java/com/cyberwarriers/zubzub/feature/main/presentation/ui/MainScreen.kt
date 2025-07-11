@@ -33,6 +33,7 @@ import com.cyberwarriers.zubzub.feature.home.presentation.ui.HomeScreen
 @Composable
 fun MainScreen(
     onNavigateToGroupCreate: () -> Unit = {},
+    onNavigateToGroupEnter: () -> Unit = {},
 ) {
     val navController = rememberNavController()
 
@@ -71,7 +72,8 @@ fun MainScreen(
         ) {
             composable(BottomNavItem.Home.route) {
                 HomeScreen(
-                    onNavigateToGroupCreate = onNavigateToGroupCreate
+                    onNavigateToGroupCreate = onNavigateToGroupCreate,
+                    onNavigateToGroupEnter = onNavigateToGroupEnter
                 )
             }
 

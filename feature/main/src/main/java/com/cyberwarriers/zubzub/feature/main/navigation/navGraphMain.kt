@@ -20,6 +20,10 @@ fun NavGraphBuilder.navGraphMain(navController: NavController) {
             onNavigateToGroupCreate = {
                 navController.navigate(Route.GroupCreate)
                 logd("그룹 생성 화면으로 이동")
+            },
+            onNavigateToGroupEnter = {
+                navController.navigate(Route.GroupEnter)
+                logd("그룹 입장 화면으로 이동")
             }
         )
     }

@@ -19,6 +19,15 @@ object Route {
     // 그룹 생성 확인 화면 네비게이션
     fun createConfirm(groupId: String) = "create_confirm/$groupId"
 
+    // 그룹 입장 화면
+    const val GroupEnter = "group_enter"
+    
+    // 그룹 확인 화면
+    const val GroupConfirm = "group_confirm/{groupId}"
+    
+    // 그룹 확인 화면 네비게이션
+    fun groupConfirm(groupId: String) = "group_confirm/$groupId"
+
     // 바텀 네비게이션
     object BottomNav {
         const val Home = "home"
