@@ -150,7 +150,7 @@ private fun GroupEnterContent(
 
         Spacer(modifier = Modifier.size(32.dp))
 
-        // 확인 버튼 (로딩 상태 지원)
+        // 확인 버튼
         Button(
             onClick = onVerifyCodeClicked,
             enabled = uiState.inviteCode.isNotBlank() && !uiState.isLoading,

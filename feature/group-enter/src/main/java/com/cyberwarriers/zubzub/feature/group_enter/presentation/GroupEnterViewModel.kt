@@ -66,7 +66,8 @@ class GroupEnterViewModel @Inject constructor(
                             logd("그룹 찾음: ${groupInfo.groupName}")
                             _uiState.value = _uiState.value.copy(
                                 isLoading = false,
-                                navigateToConfirm = groupInfo.groupId
+                                navigateToConfirm = groupInfo.groupId,
+                                inviteCode = "",
                             )
                         } else {
                             logd("존재하지 않는 그룹")
