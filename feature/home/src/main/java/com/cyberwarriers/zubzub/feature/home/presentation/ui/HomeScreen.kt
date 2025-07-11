@@ -36,7 +36,8 @@ import com.cyberwarriers.zubzub.feature.home.presentation.ui.components.MyGroupI
 @Composable
 fun HomeScreen(
     onNavigateToGroupCreate: () -> Unit = {},
-    viewModel: HomeViewModel = hiltViewModel()
+    onNavigateToGroupEnter: () -> Unit = {},
+    viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -55,7 +56,7 @@ fun HomeScreen(
 
             GroupActionCards(
                 onCreateGroupClick = onNavigateToGroupCreate,
-                onEnterGroupClick = { },
+                onEnterGroupClick = onNavigateToGroupEnter,
             )
 
             MyGroupList(
