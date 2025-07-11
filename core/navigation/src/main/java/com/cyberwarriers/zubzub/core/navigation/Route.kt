@@ -12,6 +12,12 @@ object Route {
 
     // 그룹 생성 화면
     const val GroupCreate = "group_create"
+    
+    // 그룹 생성 확인 화면
+    const val CreateConfirm = "create_confirm/{groupId}"
+    
+    // 그룹 생성 확인 화면 네비게이션
+    fun createConfirm(groupId: String) = "create_confirm/$groupId"
 
     // 바텀 네비게이션
     object BottomNav {
