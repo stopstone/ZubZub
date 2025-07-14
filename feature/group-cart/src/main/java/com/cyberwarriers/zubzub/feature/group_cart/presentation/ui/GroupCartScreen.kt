@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubTopAppBar
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
+import com.cyberwarriers.zubzub.feature.group_cart.presentation.ui.components.CartListContent
+import com.cyberwarriers.zubzub.feature.group_cart.presentation.ui.components.MembersContent
 
 @Composable
 fun GroupCartScreen() {
@@ -101,36 +103,6 @@ fun GroupCartScreen() {
                 1 -> MembersContent()
             }
         }
-    }
-}
-
-@Composable
-private fun CartListContent() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "카트 목록",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-private fun MembersContent() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "구성원",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }
 
