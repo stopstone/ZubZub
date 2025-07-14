@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,13 +18,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -37,18 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
-
-/**
- * 카트 아이템 데이터 클래스
- */
-data class CartItem(
-    val id: String,
-    val name: String,
-    val price: Int,
-    val quantity: Int,
-    val addedBy: String,
-    val isCompleted: Boolean = false
-)
+import com.cyberwarriers.zubzub.feature.group_cart.presentation.data.CartItem
 
 /**
  * 카트 목록 콘텐츠
@@ -57,6 +45,7 @@ data class CartItem(
 fun CartListContent(
     cartItems: List<CartItem> = emptyList(),
     onAddItem: () -> Unit = {},
+    onItemToggle: (String) -> Unit = {},
 ) {
     Box(
         modifier = Modifier.fillMaxSize()
@@ -94,12 +83,13 @@ fun CartListContent(
             // 카트 아이템 목록
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(cartItems) { item ->
                     CartItemCard(
                         item = item,
+                        onToggle = { onItemToggle(item.id) }
                     )
                 }
             }
@@ -125,12 +115,13 @@ fun CartListContent(
 @Composable
 private fun CartItemCard(
     item: CartItem,
+    onToggle: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        onClick = {  },
+        onClick = onToggle,
     ) {
         Row(
             modifier = Modifier
