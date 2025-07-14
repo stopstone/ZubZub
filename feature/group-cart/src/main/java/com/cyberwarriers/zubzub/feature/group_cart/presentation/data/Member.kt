@@ -10,4 +10,5 @@ data class Member(
     val isGroupLeader: Boolean = false,
     val joinDate: String,
     val totalContribution: Int = 0,
+    val isSelected: Boolean = false,
 )

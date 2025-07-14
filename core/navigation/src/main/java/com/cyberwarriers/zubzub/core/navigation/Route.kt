@@ -28,6 +28,9 @@ object Route {
     // 그룹 확인 화면 네비게이션
     fun groupConfirm(groupId: String) = "group_confirm/$groupId"
 
+    // 그룹 카트 화면
+    const val GroupCart = "group_cart"
+
     // 바텀 네비게이션
     object BottomNav {
         const val Home = "home"

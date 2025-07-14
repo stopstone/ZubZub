@@ -1,106 +1,114 @@
 package com.cyberwarriers.zubzub.feature.group_cart.presentation.ui
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubTopAppBar
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
+import com.cyberwarriers.zubzub.feature.group_cart.presentation.GroupCartViewModel
+import com.cyberwarriers.zubzub.feature.group_cart.presentation.effect.GroupCartEffect
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.ui.components.CartListContent
+import com.cyberwarriers.zubzub.feature.group_cart.presentation.ui.components.GroupCartHeader
+import com.cyberwarriers.zubzub.feature.group_cart.presentation.ui.components.GroupCartTabRow
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.ui.components.MembersContent
+import com.cyberwarriers.zubzub.feature.group_cart.presentation.ui.components.TabItem
 
+/**
+ * 그룹 카트 화면
+ */
 @Composable
-fun GroupCartScreen() {
-    var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
+fun GroupCartScreen(
+    viewModel: GroupCartViewModel = hiltViewModel(),
+    onNavigateBack: () -> Unit = {}
+) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    // Effect 처리
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is GroupCartEffect.NavigateBack -> {
+                    onNavigateBack()
+                }
+                is GroupCartEffect.NavigateToAddItem -> {
+                    // TODO: 아이템 추가 화면으로 네비게이션
+                }
+                is GroupCartEffect.NavigateToMemberDetail -> {
+                    // TODO: 멤버 상세 정보 화면으로 네비게이션
+                }
+                is GroupCartEffect.NavigateToGroupSettings -> {
+                    // TODO: 그룹 설정 화면으로 네비게이션
+                }
+                is GroupCartEffect.ShowError -> {
+                    // TODO: 에러 메시지 표시
+                }
+                is GroupCartEffect.ShowSuccess -> {
+                    // TODO: 성공 메시지 표시
+                }
+                is GroupCartEffect.ShowToast -> {
+                    // TODO: 토스트 메시지 표시
+                }
+            }
+        }
+    }
 
     Surface(
-        modifier = Modifier.fillMaxSize()
-            .statusBarsPadding()
-            .systemBarsPadding(),
+        modifier = Modifier.fillMaxSize(),
         color = Color.White,
     ) {
-        Column {
-            // 상단 앱바
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // TopAppBar
             ZubZubTopAppBar(
                 title = "",
                 navigationIcon = Icons.Default.ArrowBack,
-                onNavigationClick = { },
+                onNavigationClick = { viewModel.onNavigateBack() }
             )
 
-            Text(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                text = "그룹명",
-                fontSize = 48.sp,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            // 그룹 카트 헤더
+            GroupCartHeader(
+                groupName = uiState.groupName,
+                memberCount = uiState.memberCount
             )
-
-            Text(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                text = "00명 참여",
-                fontSize = 12.sp,
-            )
-
-            Spacer(modifier = Modifier.size(12.dp))
 
             // 탭 레이아웃
-            TabRow(
-                selectedTabIndex = selectedTabIndex,
-                modifier = Modifier.fillMaxWidth(),
-                containerColor = Color.White,
-                contentColor = MaterialTheme.colorScheme.primary,
-                indicator = { tabPositions ->
-                    TabRowDefaults.Indicator(
-                        modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                        height = 1.dp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            ) {
-                Tab(
-                    selected = selectedTabIndex == 0,
-                    onClick = { selectedTabIndex = 0 },
-                    text = { Text("카트 목록") },
-                )
-                Tab(
-                    selected = selectedTabIndex == 1,
-                    onClick = { selectedTabIndex = 1 },
-                    text = { Text("구성원") },
-                )
-            }
+            GroupCartTabRow(
+                selectedTabIndex = uiState.selectedTabIndex,
+                onTabSelected = viewModel::onTabSelected
+            )
 
             // 탭 콘텐츠
-            when (selectedTabIndex) {
-                0 -> CartListContent()
-                1 -> MembersContent()
+            when (uiState.selectedTabIndex) {
+                TabItem.CART.index -> {
+                    CartListContent(
+                        cartItems = uiState.cartItems,
+                        onAddItem = { viewModel.emitEffect(GroupCartEffect.NavigateToAddItem) },
+                        onItemToggle = { itemId -> 
+                            val item = uiState.cartItems.find { it.id == itemId }
+                            item?.let { viewModel.onCartItemCompletedChanged(itemId, !it.isCompleted) }
+                        }
+                    )
+                }
+                TabItem.MEMBERS.index -> {
+                    MembersContent(
+                        members = uiState.members,
+                        onMemberClick = { memberId ->
+                            // TODO: 멤버 상세 정보 화면으로 네비게이션
+                        }
+                    )
+                }
             }
         }
     }
@@ -110,6 +118,8 @@ fun GroupCartScreen() {
 @Composable
 fun GroupCartScreenPreview() {
     ZubZubTheme {
-        GroupCartScreen()
+        GroupCartScreen(
+            viewModel = GroupCartViewModel()
+        )
     }
 }
