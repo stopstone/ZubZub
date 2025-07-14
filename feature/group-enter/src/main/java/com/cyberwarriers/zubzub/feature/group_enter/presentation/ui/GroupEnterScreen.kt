@@ -42,6 +42,7 @@ import com.cyberwarriers.zubzub.core.ui.components.ZubZubInputTextField
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubTopAppBar
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.feature.group_enter.presentation.GroupEnterViewModel
+import com.cyberwarriers.zubzub.feature.group_enter.presentation.effect.GroupEnterEffect
 import com.cyberwarriers.zubzub.feature.group_enter.presentation.state.GroupEnterUiState
 
 /**
@@ -62,11 +63,18 @@ fun GroupEnterScreen(
         keyboardController?.show()
     }
 
-    LaunchedEffect(uiState.navigateToConfirm) {
-        uiState.navigateToConfirm?.let { groupId ->
-            keyboardController?.hide()
-            onNavigateToConfirm(groupId)
-            viewModel.onNavigationHandled()
+    // Effect 처리
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is GroupEnterEffect.NavigateToConfirm -> {
+                    keyboardController?.hide()
+                    onNavigateToConfirm(effect.groupInfo.groupId)
+                }
+                is GroupEnterEffect.ShowError -> {
+                    // TODO: 토스트 또는 스낵바로 에러 메시지 표시
+                }
+            }
         }
     }
 
@@ -141,8 +149,6 @@ private fun GroupEnterContent(
             onValueChange = onInviteCodeChanged,
             label = "초대 코드",
             placeholder = "예시: 8RpUD4FQ9hj91mcGZx4",
-            errorMessage = uiState.inviteCodeError,
-            isError = uiState.inviteCodeError.isNotEmpty(),
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(focusRequester),

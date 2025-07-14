@@ -9,6 +9,4 @@ data class GroupConfirmUiState(
     val groupInfo: GroupInfo? = null,
     val isLoading: Boolean = false,
     val isJoining: Boolean = false,
-    val navigateToGroup: Boolean = false,
-    val errorMessage: String = ""
 ) 

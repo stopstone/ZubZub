@@ -40,11 +40,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubLoadingProgress
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubSubmitButton
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubTopAppBar
-import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.core.util.toKoreanDateString
 import com.cyberwarriers.zubzub.feature.group_enter.domain.model.GroupInfo
 import com.cyberwarriers.zubzub.feature.group_enter.presentation.GroupConfirmViewModel
-import com.cyberwarriers.zubzub.feature.group_enter.presentation.state.GroupConfirmUiState
+import com.cyberwarriers.zubzub.feature.group_enter.presentation.effect.GroupConfirmEffect
 
 /**
  * 그룹 정보 확인 화면
@@ -58,13 +57,20 @@ fun GroupConfirmScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(uiState.navigateToGroup) {
-        if (uiState.navigateToGroup) {
-            val groupInfo = uiState.groupInfo
-            groupInfo?.let {
-                onNavigateToGroup(it.groupId)
+    // Effect 처리
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is GroupConfirmEffect.NavigateToHome -> {
+                    val groupInfo = uiState.groupInfo
+                    groupInfo?.let {
+                        onNavigateToGroup(it.groupId)
+                    }
+                }
+                is GroupConfirmEffect.ShowError -> {
+                    // TODO: 토스트 또는 스낵바로 에러 메시지 표시
+                }
             }
-            viewModel.onNavigationHandled()
         }
     }
 
@@ -87,12 +93,6 @@ fun GroupConfirmScreen(
             when {
                 uiState.isLoading -> {
                     ZubZubLoadingProgress()
-                }
-                uiState.errorMessage.isNotEmpty() -> {
-                    GroupErrorContent(
-                        errorMessage = uiState.errorMessage,
-                        onRetryClick = onNavigateToEnter
-                    )
                 }
                 uiState.groupInfo != null -> {
                     GroupInfoContent(
@@ -181,15 +181,11 @@ private fun GroupInfoContent(
 
                 // 그룹 정보들
                 GroupInfoRow("멤버 수", "${groupInfo.memberCount}명")
-                
+
                 if (groupInfo.description.isNotEmpty()) {
                     GroupInfoRow("설명", groupInfo.description)
                 }
-                
-                if (groupInfo.targetAmount > 0) {
-                    GroupInfoRow("목표 금액", "${String.format("%,d", groupInfo.targetAmount)}원")
-                }
-                
+
                 GroupInfoRow("생성일", groupInfo.createdAt.toKoreanDateString())
             }
         }
@@ -221,13 +217,13 @@ private fun GroupInfoContent(
             ) {
                 ZubZubSubmitButton(
                     text = "이미 참여 중인 그룹입니다",
-                    onClick = { }, // 아무 동작 안함
+                    onClick = { },
                     enable = false,
                     modifier = Modifier.fillMaxWidth()
                 )
-                
+
                 Spacer(modifier = Modifier.size(8.dp))
-                
+
                 Text(
                     text = "이미 이 그룹의 멤버입니다.\n홈 화면에서 그룹을 확인해보세요.",
                     fontSize = 14.sp,
@@ -235,9 +231,9 @@ private fun GroupInfoContent(
                     textAlign = TextAlign.Center,
                     lineHeight = 20.sp
                 )
-                
+
                 Spacer(modifier = Modifier.size(16.dp))
-                
+
                 OutlinedButton(
                     onClick = onRetryClick,
                     modifier = Modifier.fillMaxWidth(),
@@ -301,45 +297,6 @@ private fun GroupInfoRow(
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(0.6f),
             textAlign = TextAlign.End
-        )
-    }
-}
-
-@Composable
-private fun GroupErrorContent(
-    errorMessage: String,
-    onRetryClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "그룹을 찾을 수 없습니다",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.size(16.dp))
-
-        Text(
-            text = errorMessage,
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.size(32.dp))
-
-        ZubZubSubmitButton(
-            text = "다시 시도하기",
-            onClick = onRetryClick,
-            modifier = Modifier.fillMaxWidth()
         )
     }
 }

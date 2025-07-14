@@ -5,7 +5,5 @@ package com.cyberwarriers.zubzub.feature.group_enter.presentation.state
  */
 data class GroupEnterUiState(
     val inviteCode: String = "",
-    val inviteCodeError: String = "",
     val isLoading: Boolean = false,
-    val navigateToConfirm: String? = null // groupId가 있으면 확인 화면으로 이동
 ) 
