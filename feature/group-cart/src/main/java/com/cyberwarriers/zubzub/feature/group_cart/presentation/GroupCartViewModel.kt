@@ -44,9 +44,6 @@ class GroupCartViewModel @Inject constructor(
 
     // Navigation argument에서 groupId 가져오기
     private val groupId: String = savedStateHandle.get<String>("groupId") ?: ""
-    
-    // 실제 사용할 그룹 ID (빈 값이면 기본 그룹 사용)
-    private val targetGroupId: String = if (groupId.isEmpty()) "group1" else groupId
 
     init {
         loadGroupCartDetail()
@@ -57,13 +54,16 @@ class GroupCartViewModel @Inject constructor(
      */
     private fun loadGroupCartDetail() {
         if (groupId.isEmpty()) {
-            logd("GroupId가 비어있습니다. 기본 그룹(group1) 사용")
+            logd("GroupId가 비어있습니다.")
+            _uiState.update { it.copy(isLoading = false) }
+            emitEffect(GroupCartEffect.ShowError("잘못된 그룹 ID입니다"))
+            return
         }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
-            getGroupCartDetailUseCase(targetGroupId)
+            getGroupCartDetailUseCase(groupId)
                 .catch { exception ->
                     logd("그룹 카트 데이터 로드 실패: ${exception.message}")
                     _uiState.update { it.copy(isLoading = false) }
@@ -130,7 +130,7 @@ class GroupCartViewModel @Inject constructor(
             }
 
             // 서버에 업데이트 요청
-            updateCartItemStatusUseCase(targetGroupId, itemId, isCompleted)
+            updateCartItemStatusUseCase(groupId, itemId, isCompleted)
                 .onSuccess {
                     logd("아이템 상태 업데이트 성공: $itemId -> $isCompleted")
                     emitEffect(GroupCartEffect.ShowSuccess("아이템 상태가 변경되었습니다"))

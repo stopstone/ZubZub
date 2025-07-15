@@ -21,7 +21,7 @@ class GroupCartRepositoryImpl @Inject constructor(
     
     override fun getGroupCartDetail(groupId: String): Flow<GroupCartDetail> {
         return dataSource.getGroupCartDetail(groupId).map { entity ->
-            entity?.toDomain() ?: throw IllegalArgumentException("그룹을 찾을 수 없습니다: $groupId")
+            entity?.toDomain() ?: throw Exception("그룹을 찾을 수 없습니다: $groupId")
         }
     }
     
