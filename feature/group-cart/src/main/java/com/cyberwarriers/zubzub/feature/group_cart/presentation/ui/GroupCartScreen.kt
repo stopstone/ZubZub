@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -14,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.SavedStateHandle
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubTopAppBar
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.GroupCartViewModel
@@ -119,7 +119,9 @@ fun GroupCartScreen(
 fun GroupCartScreenPreview() {
     ZubZubTheme {
         GroupCartScreen(
-            viewModel = GroupCartViewModel()
+            viewModel = GroupCartViewModel(
+                savedStateHandle = SavedStateHandle()
+            )
         )
     }
 }
