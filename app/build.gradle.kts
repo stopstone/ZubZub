@@ -21,6 +21,7 @@ dependencies {
     implementation(project(":feature:home"))
     implementation(project(":feature:group-create"))
     implementation(project(":feature:group-enter"))
+    implementation(project(":feature:group-cart"))
 
     // Firebase
     implementation(platform(libs.firebase.bom))

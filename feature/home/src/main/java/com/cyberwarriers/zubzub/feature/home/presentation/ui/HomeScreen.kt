@@ -37,6 +37,7 @@ import com.cyberwarriers.zubzub.feature.home.presentation.ui.components.MyGroupI
 fun HomeScreen(
     onNavigateToGroupCreate: () -> Unit = {},
     onNavigateToGroupEnter: () -> Unit = {},
+    onNavigateToGroupCart: (String) -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -63,7 +64,9 @@ fun HomeScreen(
                 groups = uiState.groups,
                 isLoading = uiState.isLoading,
                 errorMessage = uiState.errorMessage,
-                onGroupClick = viewModel::onGroupClicked,
+                onGroupClick = { groupId ->
+                    onNavigateToGroupCart(groupId)
+                },
                 onRefresh = viewModel::refreshGroups
             )
         }

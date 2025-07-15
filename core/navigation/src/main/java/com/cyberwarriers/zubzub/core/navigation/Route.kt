@@ -29,7 +29,10 @@ object Route {
     fun groupConfirm(groupId: String) = "group_confirm/$groupId"
 
     // 그룹 카트 화면
-    const val GroupCart = "group_cart"
+    const val GroupCart = "group_cart/{groupId}"
+    
+    // 그룹 카트 화면 네비게이션
+    fun groupCart(groupId: String) = "group_cart/$groupId"
 
     // 바텀 네비게이션
     object BottomNav {

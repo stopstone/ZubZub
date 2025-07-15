@@ -24,6 +24,10 @@ fun NavGraphBuilder.navGraphMain(navController: NavController) {
             onNavigateToGroupEnter = {
                 navController.navigate(Route.GroupEnter)
                 logd("그룹 입장 화면으로 이동")
+            },
+            onNavigateToGroupCart = { groupId ->
+                navController.navigate(Route.groupCart(groupId))
+                logd("그룹 카트 화면으로 이동: $groupId")
             }
         )
     }
