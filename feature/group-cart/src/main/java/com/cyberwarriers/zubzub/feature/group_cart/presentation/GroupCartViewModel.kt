@@ -6,8 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.cyberwarriers.zubzub.core.util.logd
 import com.cyberwarriers.zubzub.feature.group_cart.domain.usecase.GetGroupCartDetailUseCase
 import com.cyberwarriers.zubzub.feature.group_cart.domain.usecase.UpdateCartItemStatusUseCase
-import com.cyberwarriers.zubzub.feature.group_cart.presentation.data.CartItem
-import com.cyberwarriers.zubzub.feature.group_cart.presentation.data.Member
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.effect.GroupCartEffect
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.mapper.toPresentation
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.state.GroupCartUiState
