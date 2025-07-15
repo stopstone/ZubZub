@@ -1,5 +1,6 @@
 package com.cyberwarriers.zubzub.feature.group_cart.presentation
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.data.CartItem
@@ -22,7 +23,9 @@ import javax.inject.Inject
  * 그룹 카트 화면 ViewModel
  */
 @HiltViewModel
-class GroupCartViewModel @Inject constructor() : ViewModel() {
+class GroupCartViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     // UI 상태 관리
     private val _uiState = MutableStateFlow(GroupCartUiState())
@@ -32,8 +35,25 @@ class GroupCartViewModel @Inject constructor() : ViewModel() {
     private val _effect = MutableSharedFlow<GroupCartEffect>()
     val effect: SharedFlow<GroupCartEffect> = _effect.asSharedFlow()
 
+    // Navigation argument에서 groupId 가져오기
+    private val groupId: String = savedStateHandle.get<String>("groupId") ?: ""
+
     init {
-        loadInitialData()
+        loadGroupData(groupId)
+    }
+
+    /**
+     * 특정 그룹 데이터 로드
+     */
+    private fun loadGroupData(groupId: String) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                groupName = if (groupId.isNotEmpty()) "그룹 ID: $groupId" else "알 수 없는 그룹",
+                memberCount = 4,
+                cartItems = getDummyCartItems(),
+                members = getDummyMembers()
+            )
+        }
     }
 
     /**
