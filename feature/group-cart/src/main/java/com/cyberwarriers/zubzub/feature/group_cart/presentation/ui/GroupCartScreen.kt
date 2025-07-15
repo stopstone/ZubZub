@@ -100,7 +100,6 @@ fun GroupCartScreen(
                 TabItem.CART.index -> {
                     CartListContent(
                         cartItems = uiState.cartItems,
-                        onAddItem = { viewModel.emitEffect(GroupCartEffect.NavigateToAddItem) },
                         onItemToggle = { itemId ->
                             val item = uiState.cartItems.find { it.id == itemId }
                             item?.let {
@@ -109,6 +108,9 @@ fun GroupCartScreen(
                                     !it.isCompleted
                                 )
                             }
+                        },
+                        onCartItemAdd = { name, price, quantity ->
+                            viewModel.onCartItemAdd(name, price, quantity)
                         }
                     )
                 }
