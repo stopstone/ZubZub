@@ -2,6 +2,7 @@ package com.cyberwarriers.zubzub.feature.group_cart.presentation.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Surface
@@ -41,21 +42,27 @@ fun GroupCartScreen(
                 is GroupCartEffect.NavigateBack -> {
                     onNavigateBack()
                 }
+
                 is GroupCartEffect.NavigateToAddItem -> {
                     // TODO: 아이템 추가 화면으로 네비게이션
                 }
+
                 is GroupCartEffect.NavigateToMemberDetail -> {
                     // TODO: 멤버 상세 정보 화면으로 네비게이션
                 }
+
                 is GroupCartEffect.NavigateToGroupSettings -> {
                     // TODO: 그룹 설정 화면으로 네비게이션
                 }
+
                 is GroupCartEffect.ShowError -> {
                     // TODO: 에러 메시지 표시
                 }
+
                 is GroupCartEffect.ShowSuccess -> {
                     // TODO: 성공 메시지 표시
                 }
+
                 is GroupCartEffect.ShowToast -> {
                     // TODO: 토스트 메시지 표시
                 }
@@ -68,7 +75,9 @@ fun GroupCartScreen(
         color = Color.White,
     ) {
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .safeContentPadding(),
         ) {
             // TopAppBar
             ZubZubTopAppBar(
@@ -95,12 +104,18 @@ fun GroupCartScreen(
                     CartListContent(
                         cartItems = uiState.cartItems,
                         onAddItem = { viewModel.emitEffect(GroupCartEffect.NavigateToAddItem) },
-                        onItemToggle = { itemId -> 
+                        onItemToggle = { itemId ->
                             val item = uiState.cartItems.find { it.id == itemId }
-                            item?.let { viewModel.onCartItemCompletedChanged(itemId, !it.isCompleted) }
+                            item?.let {
+                                viewModel.onCartItemCompletedChanged(
+                                    itemId,
+                                    !it.isCompleted
+                                )
+                            }
                         }
                     )
                 }
+
                 TabItem.MEMBERS.index -> {
                     MembersContent(
                         members = uiState.members,
