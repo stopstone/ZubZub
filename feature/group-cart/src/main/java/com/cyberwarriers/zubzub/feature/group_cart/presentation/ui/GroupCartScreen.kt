@@ -40,10 +40,6 @@ fun GroupCartScreen(
                     onNavigateBack()
                 }
 
-                is GroupCartEffect.NavigateToAddItem -> {
-                    // TODO: 아이템 추가 화면으로 네비게이션
-                }
-
                 is GroupCartEffect.NavigateToMemberDetail -> {
                     // TODO: 멤버 상세 정보 화면으로 네비게이션
                 }

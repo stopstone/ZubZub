@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * 그룹 카트 화면 ViewModel (Clean Architecture 적용)
+ * 그룹 카트 화면 ViewModel
  */
 @HiltViewModel
 class GroupCartViewModel @Inject constructor(
