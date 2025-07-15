@@ -54,7 +54,7 @@ class AuthRepositoryImpl @Inject constructor(
                 } else {
                     logd("기존 사용자 - 마지막 로그인 시간 업데이트: ${existingUser.email}")
                     updateUserInFirestore(existingUser.copy(updatedAt = Timestamp.now())).onFailure { error ->
-                        logd("⚠️ Firestore 업데이트 실패하지만 로그인은 계속: ${error.message}")
+                        logd("Firestore 업데이트 실패하지만 로그인은 계속: ${error.message}")
                     }
                 }
             } catch (e: Exception) {

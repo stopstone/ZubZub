@@ -12,11 +12,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.SavedStateHandle
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubTopAppBar
-import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.GroupCartViewModel
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.effect.GroupCartEffect
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.ui.components.CartListContent
@@ -126,17 +123,5 @@ fun GroupCartScreen(
                 }
             }
         }
-    }
-}
-
-@Preview
-@Composable
-fun GroupCartScreenPreview() {
-    ZubZubTheme {
-        GroupCartScreen(
-            viewModel = GroupCartViewModel(
-                savedStateHandle = SavedStateHandle()
-            )
-        )
     }
 }

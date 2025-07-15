@@ -3,9 +3,13 @@ package com.cyberwarriers.zubzub.feature.group_cart.presentation
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cyberwarriers.zubzub.core.util.logd
+import com.cyberwarriers.zubzub.feature.group_cart.domain.usecase.GetGroupCartDetailUseCase
+import com.cyberwarriers.zubzub.feature.group_cart.domain.usecase.UpdateCartItemStatusUseCase
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.data.CartItem
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.data.Member
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.effect.GroupCartEffect
+import com.cyberwarriers.zubzub.feature.group_cart.presentation.mapper.toPresentation
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.state.GroupCartUiState
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.ui.components.TabItem
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,16 +19,19 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * 그룹 카트 화면 ViewModel
+ * 그룹 카트 화면 ViewModel (Clean Architecture 적용)
  */
 @HiltViewModel
 class GroupCartViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val getGroupCartDetailUseCase: GetGroupCartDetailUseCase,
+    private val updateCartItemStatusUseCase: UpdateCartItemStatusUseCase
 ) : ViewModel() {
 
     // UI 상태 관리
@@ -37,36 +44,44 @@ class GroupCartViewModel @Inject constructor(
 
     // Navigation argument에서 groupId 가져오기
     private val groupId: String = savedStateHandle.get<String>("groupId") ?: ""
+    
+    // 실제 사용할 그룹 ID (빈 값이면 기본 그룹 사용)
+    private val targetGroupId: String = if (groupId.isEmpty()) "group1" else groupId
 
     init {
-        loadGroupData(groupId)
+        loadGroupCartDetail()
     }
 
     /**
-     * 특정 그룹 데이터 로드
+     * 그룹 카트 상세 정보 로드
      */
-    private fun loadGroupData(groupId: String) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                groupName = if (groupId.isNotEmpty()) "그룹 ID: $groupId" else "알 수 없는 그룹",
-                memberCount = 4,
-                cartItems = getDummyCartItems(),
-                members = getDummyMembers()
-            )
+    private fun loadGroupCartDetail() {
+        if (groupId.isEmpty()) {
+            logd("GroupId가 비어있습니다. 기본 그룹(group1) 사용")
         }
-    }
 
-    /**
-     * 초기 데이터 로드
-     */
-    private fun loadInitialData() {
-        _uiState.update { currentState ->
-            currentState.copy(
-                groupName = "우리 가족",
-                memberCount = 4,
-                cartItems = getDummyCartItems(),
-                members = getDummyMembers()
-            )
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            
+            getGroupCartDetailUseCase(targetGroupId)
+                .catch { exception ->
+                    logd("그룹 카트 데이터 로드 실패: ${exception.message}")
+                    _uiState.update { it.copy(isLoading = false) }
+                    emitEffect(GroupCartEffect.ShowError(exception.message ?: "데이터를 불러올 수 없습니다"))
+                }
+                .collect { groupCartDetail ->
+                    logd("그룹 카트 데이터 로드 성공: ${groupCartDetail.groupName}")
+                    
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            groupName = groupCartDetail.groupName,
+                            memberCount = groupCartDetail.memberCount,
+                            cartItems = groupCartDetail.cartItems.map { it.toPresentation() },
+                            members = groupCartDetail.members.map { it.toPresentation() },
+                            isLoading = false
+                        )
+                    }
+                }
         }
     }
 
@@ -100,92 +115,51 @@ class GroupCartViewModel @Inject constructor(
      * 카트 아이템 완료 상태 변경
      */
     fun onCartItemCompletedChanged(itemId: String, isCompleted: Boolean) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                cartItems = currentState.cartItems.map { item ->
-                    if (item.id == itemId) {
-                        item.copy(isCompleted = isCompleted)
-                    } else {
-                        item
+        viewModelScope.launch {
+            // 낙관적 업데이트 (UI 먼저 변경)
+            _uiState.update { currentState ->
+                currentState.copy(
+                    cartItems = currentState.cartItems.map { item ->
+                        if (item.id == itemId) {
+                            item.copy(isCompleted = isCompleted)
+                        } else {
+                            item
+                        }
                     }
+                )
+            }
+
+            // 서버에 업데이트 요청
+            updateCartItemStatusUseCase(targetGroupId, itemId, isCompleted)
+                .onSuccess {
+                    logd("아이템 상태 업데이트 성공: $itemId -> $isCompleted")
+                    emitEffect(GroupCartEffect.ShowSuccess("아이템 상태가 변경되었습니다"))
                 }
-            )
+                .onFailure { exception ->
+                    logd("아이템 상태 업데이트 실패: ${exception.message}")
+                    
+                    // 실패 시 원래 상태로 되돌리기
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            cartItems = currentState.cartItems.map { item ->
+                                if (item.id == itemId) {
+                                    item.copy(isCompleted = !isCompleted)
+                                } else {
+                                    item
+                                }
+                            }
+                        )
+                    }
+                    
+                    emitEffect(GroupCartEffect.ShowError("상태 변경에 실패했습니다"))
+                }
         }
     }
 
     /**
-     * 더미 카트 아이템 생성
+     * 새로고침
      */
-    private fun getDummyCartItems(): List<CartItem> {
-        return listOf(
-            CartItem(
-                id = "1",
-                name = "사과",
-                price = 2000,
-                quantity = 3,
-                addedBy = "엄마",
-                isCompleted = false
-            ),
-            CartItem(
-                id = "2", 
-                name = "바나나",
-                price = 1500,
-                quantity = 2,
-                addedBy = "아빠",
-                isCompleted = true
-            ),
-            CartItem(
-                id = "3",
-                name = "우유",
-                price = 3500,
-                quantity = 1,
-                addedBy = "첫째",
-                isCompleted = false
-            )
-        )
-    }
-
-    /**
-     * 더미 멤버 데이터 생성
-     */
-    private fun getDummyMembers(): List<Member> {
-        return listOf(
-            Member(
-                id = "1",
-                name = "엄마",
-                email = "mom@example.com",
-                isGroupLeader = true,
-                joinDate = "2024-01-01",
-                totalContribution = 50000,
-                isSelected = true
-            ),
-            Member(
-                id = "2",
-                name = "아빠", 
-                email = "dad@example.com",
-                isGroupLeader = false,
-                joinDate = "2024-01-01",
-                totalContribution = 30000,
-                isSelected = false
-            ),
-            Member(
-                id = "3",
-                name = "첫째",
-                email = "first@example.com",
-                isGroupLeader = false,
-                joinDate = "2024-01-01",
-                totalContribution = 20000,
-                isSelected = true
-            ),
-            Member(
-                id = "4",
-                name = "둘째",
-                email = "second@example.com",
-                isGroupLeader = false,
-                joinDate = "2024-01-01",
-                totalContribution = 10000,
-                isSelected = false
-            )
-        )
+    fun onRefresh() {
+        loadGroupCartDetail()
     }
 } 
