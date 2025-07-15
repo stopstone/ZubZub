@@ -84,12 +84,24 @@ class AuthRepositoryImpl @Inject constructor(
 
     // Firestore에 사용자 정보 저장
     override suspend fun saveUserToFirestore(user: User): Result<Unit> = try {
+        // whereIn 쿼리를 위해 userId 필드를 명시적으로 추가
+        val userDataWithId = mapOf(
+            "userId" to user.userId,
+            "email" to user.email,
+            "displayName" to user.displayName,
+            "profileImageUrl" to user.profileImageUrl,
+            "provider" to user.provider,
+            "createdAt" to user.createdAt,
+            "updatedAt" to user.updatedAt,
+            "isActive" to user.isActive
+        )
+        
         firestore.collection(USERS_COLLECTION)
             .document(user.userId)
-            .set(user)
+            .set(userDataWithId)
             .await()
         
-        logd("사용자 정보 Firestore 저장 완료: ${user.email}")
+        logd("사용자 정보 Firestore 저장 완료 (userId 필드 포함): ${user.email}")
         Result.success(Unit)
     } catch (e: Exception) {
         logd("사용자 정보 Firestore 저장 실패: ${e.message}")
@@ -118,12 +130,24 @@ class AuthRepositoryImpl @Inject constructor(
 
     // Firestore에서 사용자 정보 업데이트
     override suspend fun updateUserInFirestore(user: User): Result<Unit> = try {
+        // whereIn 쿼리를 위해 userId 필드를 명시적으로 추가
+        val userDataWithId = mapOf(
+            "userId" to user.userId,
+            "email" to user.email,
+            "displayName" to user.displayName,
+            "profileImageUrl" to user.profileImageUrl,
+            "provider" to user.provider,
+            "createdAt" to user.createdAt,
+            "updatedAt" to user.updatedAt,
+            "isActive" to user.isActive
+        )
+        
         firestore.collection(USERS_COLLECTION)
             .document(user.userId)
-            .set(user)
+            .set(userDataWithId)
             .await()
         
-        logd("사용자 정보 Firestore 업데이트 완료: ${user.email}")
+        logd("사용자 정보 Firestore 업데이트 완료 (userId 필드 포함): ${user.email}")
         Result.success(Unit)
     } catch (e: Exception) {
         logd("사용자 정보 Firestore 업데이트 실패: ${e.message}")
