@@ -24,6 +24,7 @@ data class CartGroupFirebaseEntity(
     val status: String = "ACTIVE", // ACTIVE, COMPLETED, INACTIVE
     val targetAmount: Long = 0L,
     val currentAmount: Long = 0L,
+    val progressPercentage: Int = 0,
     
     // 설정 정보
     val settings: Map<String, Any> = mapOf(
