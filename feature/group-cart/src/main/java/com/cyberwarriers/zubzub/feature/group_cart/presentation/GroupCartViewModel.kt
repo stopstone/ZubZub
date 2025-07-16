@@ -7,6 +7,7 @@ import com.cyberwarriers.zubzub.core.util.logd
 import com.cyberwarriers.zubzub.feature.group_cart.domain.usecase.AddCartItemUseCase
 import com.cyberwarriers.zubzub.feature.group_cart.domain.usecase.GetGroupCartDetailUseCase
 import com.cyberwarriers.zubzub.feature.group_cart.domain.usecase.UpdateCartItemStatusUseCase
+import com.cyberwarriers.zubzub.feature.group_cart.presentation.data.CartItem
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.effect.GroupCartEffect
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.mapper.toPresentation
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.state.GroupCartUiState
@@ -31,7 +32,7 @@ class GroupCartViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getGroupCartDetailUseCase: GetGroupCartDetailUseCase,
     private val updateCartItemStatusUseCase: UpdateCartItemStatusUseCase,
-    private val addCartItemUseCase: AddCartItemUseCase
+    private val addCartItemUseCase: AddCartItemUseCase,
 ) : ViewModel() {
 
     // UI 상태 관리
@@ -47,6 +48,16 @@ class GroupCartViewModel @Inject constructor(
 
     init {
         loadGroupCartDetail()
+    }
+
+    /**
+     * 진행률 계산
+     */
+    private fun calculateProgress(cartItems: List<CartItem>): Float {
+        if (cartItems.isEmpty()) return 0f
+
+        val completedItems = cartItems.count { it.isCompleted }
+        return completedItems.toFloat() / cartItems.size
     }
 
     /**
@@ -72,12 +83,16 @@ class GroupCartViewModel @Inject constructor(
                 .collect { groupCartDetail ->
                     logd("그룹 카트 데이터 로드 성공: ${groupCartDetail.groupName}")
                     
+                    val cartItems = groupCartDetail.cartItems.map { it.toPresentation() }
+                    val progress = calculateProgress(cartItems)
+                    
                     _uiState.update { currentState ->
                         currentState.copy(
                             groupName = groupCartDetail.groupName,
                             memberCount = groupCartDetail.memberCount,
-                            cartItems = groupCartDetail.cartItems.map { it.toPresentation() },
+                            cartItems = cartItems,
                             members = groupCartDetail.members.map { it.toPresentation() },
+                            progress = progress,
                             isLoading = false
                         )
                     }
@@ -118,14 +133,18 @@ class GroupCartViewModel @Inject constructor(
         viewModelScope.launch {
             // 낙관적 업데이트 (UI 먼저 변경)
             _uiState.update { currentState ->
-                currentState.copy(
-                    cartItems = currentState.cartItems.map { item ->
-                        if (item.id == itemId) {
-                            item.copy(isCompleted = isCompleted)
-                        } else {
-                            item
-                        }
+                val updatedCartItems = currentState.cartItems.map { item ->
+                    if (item.id == itemId) {
+                        item.copy(isCompleted = isCompleted)
+                    } else {
+                        item
                     }
+                }
+                val progress = calculateProgress(updatedCartItems)
+                
+                currentState.copy(
+                    cartItems = updatedCartItems,
+                    progress = progress
                 )
             }
 
@@ -140,14 +159,18 @@ class GroupCartViewModel @Inject constructor(
                     
                     // 실패 시 원래 상태로 되돌리기
                     _uiState.update { currentState ->
-                        currentState.copy(
-                            cartItems = currentState.cartItems.map { item ->
-                                if (item.id == itemId) {
-                                    item.copy(isCompleted = !isCompleted)
-                                } else {
-                                    item
-                                }
+                        val revertedCartItems = currentState.cartItems.map { item ->
+                            if (item.id == itemId) {
+                                item.copy(isCompleted = !isCompleted)
+                            } else {
+                                item
                             }
+                        }
+                        val progress = calculateProgress(revertedCartItems)
+                        
+                        currentState.copy(
+                            cartItems = revertedCartItems,
+                            progress = progress
                         )
                     }
                     

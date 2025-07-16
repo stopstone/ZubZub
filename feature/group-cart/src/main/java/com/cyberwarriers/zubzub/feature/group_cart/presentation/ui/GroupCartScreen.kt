@@ -82,7 +82,8 @@ fun GroupCartScreen(
             // 그룹 카트 헤더
             GroupCartHeader(
                 groupName = uiState.groupName,
-                memberCount = uiState.memberCount
+                memberCount = uiState.memberCount,
+                progress = uiState.progress
             )
 
             // 탭 레이아웃

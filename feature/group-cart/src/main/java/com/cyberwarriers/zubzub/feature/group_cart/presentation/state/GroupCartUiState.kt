@@ -12,5 +12,6 @@ data class GroupCartUiState(
     val members: List<Member> = emptyList(),
     val groupName: String = "",
     val memberCount: Int = 0,
-    val isLoading: Boolean = false
+    val progress: Float = 0f,
+    val isLoading: Boolean = false,
 ) 
