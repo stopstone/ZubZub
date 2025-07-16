@@ -165,14 +165,20 @@ class GroupCartDataSource @Inject constructor(
      */
     suspend fun updateCartItemStatus(groupId: String, itemId: String, isCompleted: Boolean): Boolean {
         return try {
+            // 1. 카트 아이템 상태 업데이트
             firestore.collection(GROUPS_COLLECTION)
                 .document(groupId)
                 .collection(CART_ITEMS_SUBCOLLECTION)
                 .document(itemId)
                 .update("isCompleted", isCompleted)
                 .await()
+            
+            // 2. 그룹 진행률 업데이트
+            updateGroupProgress(groupId)
+            
             true
         } catch (e: Exception) {
+            logd("카트 아이템 상태 업데이트 실패: ${e.message}")
             false
         }
     }
@@ -203,8 +209,12 @@ class GroupCartDataSource @Inject constructor(
                 .add(cartItemData)
                 .await()
             
+            // 진행률 업데이트 (새 아이템이 추가되어 전체 아이템 수가 변경됨)
+            updateGroupProgress(groupId)
+            
             docRef.id
         } catch (e: Exception) {
+            logd("카트 아이템 추가 실패: ${e.message}")
             null
         }
     }
@@ -220,9 +230,70 @@ class GroupCartDataSource @Inject constructor(
                 .document(itemId)
                 .delete()
                 .await()
+            
+            // 진행률 업데이트 (아이템이 삭제되어 전체 아이템 수가 변경됨)
+            updateGroupProgress(groupId)
+            
             true
         } catch (e: Exception) {
+            logd("카트 아이템 삭제 실패: ${e.message}")
             false
+        }
+    }
+    
+    /**
+     * 그룹 진행률 업데이트 (공통 함수)
+     */
+    private suspend fun updateGroupProgress(groupId: String) {
+        try {
+            // 전체 카트 아이템을 조회하여 진행률 계산
+            val cartItemsSnapshot = firestore.collection(GROUPS_COLLECTION)
+                .document(groupId)
+                .collection(CART_ITEMS_SUBCOLLECTION)
+                .get()
+                .await()
+            
+            val cartItems = cartItemsSnapshot.documents.mapNotNull { itemDoc ->
+                try {
+                    CartItemEntity(
+                        id = itemDoc.id,
+                        name = itemDoc.getString("name") ?: "",
+                        price = itemDoc.getLong("price") ?: 0L,
+                        quantity = itemDoc.getLong("quantity")?.toInt() ?: 1,
+                        addedBy = itemDoc.getString("addedBy") ?: "익명",
+                        addedAt = itemDoc.getLong("addedAt") ?: 0L,
+                        isCompleted = itemDoc.getBoolean("isCompleted") ?: false
+                    )
+                } catch (e: Exception) {
+                    logd("카트 아이템 파싱 에러: ${e.message}")
+                    null
+                }
+            }
+            
+            val progressPercentage = if (cartItems.isNotEmpty()) {
+                val completedItems = cartItems.count { it.isCompleted }
+                val calculatedProgress = ((completedItems.toDouble() / cartItems.size) * 100).toInt()
+                calculatedProgress.coerceIn(0, 100) // 0-100 범위로 제한
+            } else {
+                0
+            }
+            
+            logd("그룹 진행률 업데이트: ${cartItems.count { it.isCompleted }}개 완료 / ${cartItems.size}개 전체 = ${progressPercentage}%")
+            
+            // 그룹 문서의 진행률과 updatedAt 업데이트 (실시간 리스너 트리거)
+            firestore.collection(GROUPS_COLLECTION)
+                .document(groupId)
+                .update(
+                    mapOf(
+                        "progressPercentage" to progressPercentage,
+                        "updatedAt" to com.google.firebase.Timestamp.now()
+                    )
+                )
+                .await()
+            
+            logd("Firebase 진행률 업데이트 완료: ${progressPercentage}%")
+        } catch (e: Exception) {
+            logd("그룹 진행률 업데이트 실패: ${e.message}")
         }
     }
 } 
