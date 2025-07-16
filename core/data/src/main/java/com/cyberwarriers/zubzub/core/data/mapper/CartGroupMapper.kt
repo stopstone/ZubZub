@@ -15,15 +15,11 @@ import com.cyberwarriers.zubzub.core.domain.model.MemberRole
 
 // Firebase Entity -> CartGroupSummary
 fun CartGroupFirebaseEntity.toSummary(currentUserId: String): CartGroupSummary {
-    val progressPercentage = if (targetAmount > 0) {
-        ((currentAmount.toDouble() / targetAmount.toDouble()) * 100).toInt()
-    } else 0
-    
     return CartGroupSummary(
         groupId = groupId,
         groupName = groupName,
         memberCount = memberIds.size,
-        progressPercentage = progressPercentage,
+        progressPercentage = progressPercentage.coerceIn(0, 100),
         createdAt = createdAt?.seconds?.times(1000) ?: System.currentTimeMillis(),
         isOwner = createdBy == currentUserId,
         currentAmount = currentAmount,
@@ -33,10 +29,6 @@ fun CartGroupFirebaseEntity.toSummary(currentUserId: String): CartGroupSummary {
 
 // Firebase Entity -> CartGroupDetail (멤버 리스트 필요)
 fun CartGroupFirebaseEntity.toDetail(members: List<GroupMember>): CartGroupDetail {
-    val progressPercentage = if (targetAmount > 0) {
-        ((currentAmount.toDouble() / targetAmount.toDouble()) * 100).toInt()
-    } else 0
-    
     return CartGroupDetail(
         groupId = groupId,
         groupName = groupName,
@@ -44,7 +36,7 @@ fun CartGroupFirebaseEntity.toDetail(members: List<GroupMember>): CartGroupDetai
         members = members,
         totalAmount = currentAmount,
         targetAmount = targetAmount,
-        progressPercentage = progressPercentage,
+        progressPercentage = progressPercentage.coerceIn(0, 100), // Firebase에서 직접 가져오기
         createdAt = createdAt?.seconds?.times(1000) ?: System.currentTimeMillis(),
         updatedAt = updatedAt?.seconds?.times(1000) ?: System.currentTimeMillis(),
         settings = settings.toGroupSettings(),
