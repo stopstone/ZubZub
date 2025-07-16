@@ -293,6 +293,12 @@ private fun CartItemCard(
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
+                        text = "수량 ${item.quantity}",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
                         text = "by ${item.addedBy}",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
