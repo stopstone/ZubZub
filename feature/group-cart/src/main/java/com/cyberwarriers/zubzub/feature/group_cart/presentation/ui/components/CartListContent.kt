@@ -34,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -158,20 +159,18 @@ fun CartListContent(
  * 카트 아이템 추가 바텀시트
  */
 @Composable
-private fun AddCartItemBottomSheet(
+internal fun AddCartItemBottomSheet(
     onDismiss: () -> Unit,
     onAddItem: (name: String, price: Int, quantity: Int) -> Unit
 ) {
     var itemName by remember { mutableStateOf("") }
     var itemPrice by remember { mutableStateOf("") }
-    var itemQuantity by remember { mutableStateOf("1") }
+    var itemQuantity by remember { mutableIntStateOf(1) }
 
     val isFormValid = itemName.isNotBlank() &&
             itemPrice.isNotBlank() &&
             itemPrice.toIntOrNull() != null &&
-            itemQuantity.isNotBlank() &&
-            itemQuantity.toIntOrNull() != null &&
-            (itemQuantity.toIntOrNull() ?: 0) > 0
+            itemQuantity > 0
 
     Column(
         modifier = Modifier
@@ -180,51 +179,67 @@ private fun AddCartItemBottomSheet(
     ) {
         // 제목
         Text(
-            text = "아이템 추가",
+            text = "장바구니 추가",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(vertical = 16.dp)
+            modifier = Modifier.padding(vertical = 24.dp)
         )
 
-        // 폼 필드들
+        // 폼 필드
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // 아이템 이름
+            // 이름
             ZubZubInputTextField(
                 value = itemName,
                 onValueChange = { itemName = it },
-                label = "아이템 이름",
-                placeholder = "구매할 아이템 이름을 입력하세요"
+                label = "이름",
+                placeholder = "장바구니에 담을 이름을 입력하세요"
             )
 
-            // 가격
-            ZubZubNumberInputField(
-                value = itemPrice,
-                onValueChange = { itemPrice = it },
-                label = "가격",
-                placeholder = "가격을 입력하세요 (원)",
-                allowZero = false
-            )
 
-            // 수량
-            ZubZubNumberInputField(
-                value = itemQuantity,
-                onValueChange = { itemQuantity = it },
-                label = "수량",
-                placeholder = "수량",
-                allowZero = false
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                // 가격
+                ZubZubNumberInputField(
+                    value = itemPrice,
+                    onValueChange = { itemPrice = it },
+                    label = "가격",
+                    placeholder = "가격을 입력하세요",
+                    allowZero = false,
+                    modifier = Modifier.weight(1.2f)
+                )
+
+                // 수량
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "수량",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    
+                    QuantityCounter(
+                        quantity = itemQuantity,
+                        onQuantityChange = { itemQuantity = it }
+                    )
+                }
+            }
         }
+        Spacer(modifier = Modifier.height(36.dp))
 
         ZubZubSubmitButton(
             modifier = Modifier.padding(horizontal = 16.dp),
             text = "카트에 추가하기",
             onClick = {
                 val price = itemPrice.toIntOrNull() ?: 0
-                val quantity = itemQuantity.toIntOrNull() ?: 1
-                onAddItem(itemName, price, quantity)
+                onAddItem(itemName, price, itemQuantity)
             },
             enable = isFormValid,
         )
@@ -374,4 +389,16 @@ fun CartListContentEmptyPreview() {
             cartItems = emptyList()
         )
     }
-} 
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AddCartItemBottomSheetPreview() {
+    ZubZubTheme {
+        AddCartItemBottomSheet(
+            onDismiss = { },
+            onAddItem = { name, price, quantity ->
+            }
+        )
+    }
+}
