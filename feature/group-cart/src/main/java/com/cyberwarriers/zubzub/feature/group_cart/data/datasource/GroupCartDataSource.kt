@@ -1,6 +1,7 @@
 package com.cyberwarriers.zubzub.feature.group_cart.data.datasource
 
 import com.cyberwarriers.zubzub.core.util.logd
+import com.cyberwarriers.zubzub.feature.group_cart.data.model.CartItemEntity
 import com.cyberwarriers.zubzub.feature.group_cart.data.model.GroupCartDetailEntity
 import com.cyberwarriers.zubzub.feature.group_cart.data.model.GroupMemberEntity
 import com.google.firebase.firestore.FirebaseFirestore
@@ -31,6 +32,32 @@ class GroupCartDataSource @Inject constructor(
         logd("Firebase 그룹 조회 시작 - 그룹 ID: $groupId")
         val groupRef = firestore.collection(GROUPS_COLLECTION).document(groupId)
         
+        // 그룹 정보와 카트 아이템을 동시에 관찰하기 위한 변수들
+        var currentGroupData: Map<String, Any>? = null
+        var currentCartItems: List<CartItemEntity> = emptyList()
+        var currentMembers: List<GroupMemberEntity> = emptyList()
+        
+        // 데이터 조합 및 전송 함수
+        fun combineAndSendData() {
+            currentGroupData?.let { groupData ->
+                val groupName = groupData["groupName"] as? String ?: ""
+                val memberIds = groupData["memberIds"] as? List<String> ?: emptyList()
+                val memberCount = memberIds.size
+                
+                val groupCartDetail = GroupCartDetailEntity(
+                    groupId = groupId,
+                    groupName = groupName,
+                    memberCount = memberCount,
+                    cartItems = currentCartItems,
+                    members = currentMembers
+                )
+                
+                logd("데이터 조합 완료 - 그룹: '$groupName', 아이템: ${currentCartItems.size}개, 멤버: ${currentMembers.size}명")
+                trySend(groupCartDetail)
+            }
+        }
+        
+        // 1. 그룹 정보 리스너
         val groupListener = groupRef.addSnapshotListener { groupSnapshot, error ->
             if (error != null) {
                 logd("Firebase 그룹 조회 에러: ${error.message}")
@@ -40,47 +67,26 @@ class GroupCartDataSource @Inject constructor(
             
             if (groupSnapshot?.exists() == true) {
                 logd("Firebase 그룹 문서 발견")
-                logd("전체 문서 데이터: ${groupSnapshot.data}")
+                currentGroupData = groupSnapshot.data
                 
-                // 모든 필드를 로그로 출력해서 구조 파악
-                groupSnapshot.data?.forEach { (key, value) ->
-                    logd("필드: $key = $value (타입: ${value?.javaClass?.simpleName})")
-                }
-                
-                // 그룹 기본 정보 추출
                 val groupName = groupSnapshot.getString("groupName") ?: ""
                 val memberIds = groupSnapshot.get("memberIds") as? List<String> ?: emptyList()
-                val memberCount = memberIds.size
                 
-                logd("추출된 그룹 정보 - 이름: '$groupName', 멤버 ID들: $memberIds, 멤버수: $memberCount")
+                logd("그룹 정보 업데이트 - 이름: '$groupName', 멤버 ID들: $memberIds")
                 
-                // memberIds가 있으면 users 컬렉션에서 실제 사용자 정보 조회
+                // 멤버 정보 조회
                 if (memberIds.isNotEmpty()) {
-                    logd("사용자 정보 조회 시작 - ${memberIds.size}명")
-                    logd("조회할 memberIds: $memberIds")
-                    
-                    // whereIn으로 한번에 모든 사용자 조회 (효율적인 방식)
                     firestore.collection("users")
                         .whereIn("userId", memberIds)
                         .addSnapshotListener { usersSnapshot, usersError ->
                             if (usersError != null) {
                                 logd("사용자 정보 조회 에러: ${usersError.message}")
-                                // 에러가 있어도 그룹 정보는 표시 (빈 멤버 리스트)
-                                val groupCartDetail = GroupCartDetailEntity(
-                                    groupId = groupId,
-                                    groupName = groupName,
-                                    memberCount = memberCount,
-                                    cartItems = emptyList(),
-                                    members = emptyList()
-                                )
-                                trySend(groupCartDetail)
+                                currentMembers = emptyList()
+                                combineAndSendData()
                                 return@addSnapshotListener
                             }
                             
-                            logd("사용자 정보 조회 결과: ${usersSnapshot?.documents?.size ?: 0}명")
-                            
-                            val members = usersSnapshot?.documents?.mapNotNull { userDoc ->
-                                logd("사용자 데이터: ${userDoc.data}")
+                            currentMembers = usersSnapshot?.documents?.mapNotNull { userDoc ->
                                 try {
                                     GroupMemberEntity(
                                         id = userDoc.getString("userId") ?: userDoc.id,
@@ -98,34 +104,12 @@ class GroupCartDataSource @Inject constructor(
                                 }
                             }?.sortedWith(compareBy<GroupMemberEntity> { !it.isGroupLeader }.thenBy { it.joinedAt }) ?: emptyList()
                             
-                            logd("파싱된 멤버 정보: ${members.size}명")
-                            members.forEach { member ->
-                                logd("멤버: ${member.name} (${member.email}), 리더: ${member.isGroupLeader}, 입장일: ${java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date(member.joinedAt))}")
-                            }
-                            
-                            // 전체 데이터 조합
-                            val groupCartDetail = GroupCartDetailEntity(
-                                groupId = groupId,
-                                groupName = groupName,
-                                memberCount = memberCount,
-                                cartItems = emptyList(),
-                                members = members
-                            )
-                            
-                            logd("최종 데이터 조합 완료 - 그룹: '$groupName', 멤버: ${members.size}명")
-                            trySend(groupCartDetail)
+                            logd("멤버 정보 업데이트: ${currentMembers.size}명")
+                            combineAndSendData()
                         }
                 } else {
-                    logd("멤버 ID가 없음 - 빈 그룹")
-                    // memberIds가 없으면 빈 그룹으로 처리
-                    val groupCartDetail = GroupCartDetailEntity(
-                        groupId = groupId,
-                        groupName = groupName,
-                        memberCount = 0,
-                        cartItems = emptyList(),
-                        members = emptyList()
-                    )
-                    trySend(groupCartDetail)
+                    currentMembers = emptyList()
+                    combineAndSendData()
                 }
             } else {
                 logd("Firebase 그룹 문서가 존재하지 않음: $groupId")
@@ -133,9 +117,46 @@ class GroupCartDataSource @Inject constructor(
             }
         }
         
+        // 2. 카트 아이템 리스너
+        val cartItemsListener = groupRef.collection(CART_ITEMS_SUBCOLLECTION)
+            .orderBy("addedAt")
+            .addSnapshotListener { cartSnapshot, error ->
+                if (error != null) {
+                    logd("Firebase 카트 아이템 조회 에러: ${error.message}")
+                    currentCartItems = emptyList()
+                    combineAndSendData()
+                    return@addSnapshotListener
+                }
+                
+                currentCartItems = cartSnapshot?.documents?.mapNotNull { itemDoc ->
+                    try {
+                        CartItemEntity(
+                            id = itemDoc.id,
+                            name = itemDoc.getString("name") ?: "",
+                            price = itemDoc.getLong("price") ?: 0L,
+                            quantity = itemDoc.getLong("quantity")?.toInt() ?: 1,
+                            addedBy = itemDoc.getString("addedBy") ?: "익명",
+                            addedAt = itemDoc.getLong("addedAt") ?: 0L,
+                            isCompleted = itemDoc.getBoolean("isCompleted") ?: false
+                        )
+                    } catch (e: Exception) {
+                        logd("카트 아이템 파싱 에러: ${e.message}")
+                        null
+                    }
+                } ?: emptyList()
+                
+                logd("카트 아이템 업데이트: ${currentCartItems.size}개")
+                currentCartItems.forEach { item ->
+                    logd("아이템: ${item.name} - ${item.price}원 x ${item.quantity}개 (완료: ${item.isCompleted})")
+                }
+                
+                combineAndSendData()
+            }
+        
         awaitClose { 
             groupListener.remove()
-            logd("Firebase 그룹 리스너 해제: $groupId")
+            cartItemsListener.remove()
+            logd("Firebase 리스너 해제: $groupId")
         }
     }
 

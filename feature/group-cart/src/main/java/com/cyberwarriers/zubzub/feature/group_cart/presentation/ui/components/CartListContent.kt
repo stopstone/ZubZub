@@ -9,8 +9,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -21,12 +24,20 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,18 +46,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.cyberwarriers.zubzub.core.ui.components.ZubZubInputTextField
+import com.cyberwarriers.zubzub.core.ui.components.ZubZubNumberInputField
+import com.cyberwarriers.zubzub.core.ui.components.ZubZubSubmitButton
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.data.CartItem
 
 /**
  * 카트 목록 콘텐츠
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartListContent(
     cartItems: List<CartItem> = emptyList(),
-    onAddItem: () -> Unit = {},
     onItemToggle: (String) -> Unit = {},
+    onCartItemAdd: (name: String, price: Int, quantity: Int) -> Unit = { _, _, _ -> },
 ) {
+    var showBottomSheet by remember { mutableStateOf(false) }
+    val bottomSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -97,7 +117,9 @@ fun CartListContent(
 
         // 플로팅 액션 버튼
         FloatingActionButton(
-            onClick = onAddItem,
+            onClick = {
+                showBottomSheet = true
+            },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
@@ -110,6 +132,120 @@ fun CartListContent(
             )
         }
     }
+
+    // 바텀시트
+    if (showBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showBottomSheet = false },
+            sheetState = bottomSheetState,
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .safeContentPadding()
+                .padding(top = 8.dp)
+        ) {
+            AddCartItemBottomSheet(
+                onDismiss = { showBottomSheet = false },
+                onAddItem = { name, price, quantity ->
+                    onCartItemAdd(name, price, quantity)
+                    showBottomSheet = false
+                }
+            )
+        }
+    }
+}
+
+/**
+ * 카트 아이템 추가 바텀시트
+ */
+@Composable
+internal fun AddCartItemBottomSheet(
+    onDismiss: () -> Unit,
+    onAddItem: (name: String, price: Int, quantity: Int) -> Unit
+) {
+    var itemName by remember { mutableStateOf("") }
+    var itemPrice by remember { mutableStateOf("") }
+    var itemQuantity by remember { mutableIntStateOf(1) }
+
+    val isFormValid = itemName.isNotBlank() &&
+            itemPrice.isNotBlank() &&
+            itemPrice.toIntOrNull() != null &&
+            itemQuantity > 0
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+    ) {
+        // 제목
+        Text(
+            text = "장바구니 추가",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(vertical = 24.dp)
+        )
+
+        // 폼 필드
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            // 이름
+            ZubZubInputTextField(
+                value = itemName,
+                onValueChange = { itemName = it },
+                label = "이름",
+                placeholder = "장바구니에 담을 이름을 입력하세요"
+            )
+
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                // 가격
+                ZubZubNumberInputField(
+                    value = itemPrice,
+                    onValueChange = { itemPrice = it },
+                    label = "가격",
+                    placeholder = "가격을 입력하세요",
+                    allowZero = false,
+                    modifier = Modifier.weight(1.2f)
+                )
+
+                // 수량
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "수량",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    
+                    QuantityCounter(
+                        quantity = itemQuantity,
+                        onQuantityChange = { itemQuantity = it }
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(36.dp))
+
+        ZubZubSubmitButton(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            text = "카트에 추가하기",
+            onClick = {
+                val price = itemPrice.toIntOrNull() ?: 0
+                onAddItem(itemName, price, itemQuantity)
+            },
+            enable = isFormValid,
+        )
+        Spacer(modifier = Modifier.height(36.dp))
+    }
+
 }
 
 @Composable
@@ -154,6 +290,12 @@ private fun CartItemCard(
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = "수량 ${item.quantity}",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
@@ -253,4 +395,16 @@ fun CartListContentEmptyPreview() {
             cartItems = emptyList()
         )
     }
-} 
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AddCartItemBottomSheetPreview() {
+    ZubZubTheme {
+        AddCartItemBottomSheet(
+            onDismiss = { },
+            onAddItem = { name, price, quantity ->
+            }
+        )
+    }
+}

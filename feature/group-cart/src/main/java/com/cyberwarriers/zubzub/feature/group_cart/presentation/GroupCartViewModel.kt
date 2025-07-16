@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cyberwarriers.zubzub.core.util.logd
+import com.cyberwarriers.zubzub.feature.group_cart.domain.usecase.AddCartItemUseCase
 import com.cyberwarriers.zubzub.feature.group_cart.domain.usecase.GetGroupCartDetailUseCase
 import com.cyberwarriers.zubzub.feature.group_cart.domain.usecase.UpdateCartItemStatusUseCase
 import com.cyberwarriers.zubzub.feature.group_cart.presentation.effect.GroupCartEffect
@@ -23,13 +24,14 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * 그룹 카트 화면 ViewModel (Clean Architecture 적용)
+ * 그룹 카트 화면 ViewModel
  */
 @HiltViewModel
 class GroupCartViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getGroupCartDetailUseCase: GetGroupCartDetailUseCase,
-    private val updateCartItemStatusUseCase: UpdateCartItemStatusUseCase
+    private val updateCartItemStatusUseCase: UpdateCartItemStatusUseCase,
+    private val addCartItemUseCase: AddCartItemUseCase
 ) : ViewModel() {
 
     // UI 상태 관리
@@ -93,7 +95,7 @@ class GroupCartViewModel @Inject constructor(
     /**
      * Effect 발생
      */
-    fun emitEffect(effect: GroupCartEffect) {
+    private fun emitEffect(effect: GroupCartEffect) {
         viewModelScope.launch {
             _effect.emit(effect)
         }
@@ -155,9 +157,19 @@ class GroupCartViewModel @Inject constructor(
     }
 
     /**
-     * 새로고침
+     * 카트 아이템 추가
      */
-    fun onRefresh() {
-        loadGroupCartDetail()
+    fun onCartItemAdd(name: String, price: Int, quantity: Int) {
+        viewModelScope.launch {
+            addCartItemUseCase(groupId, name, price.toLong(), quantity)
+                .onSuccess { itemId ->
+                    logd("카트 아이템 추가 성공: $itemId")
+                    emitEffect(GroupCartEffect.ShowSuccess("아이템이 추가되었습니다"))
+                }
+                .onFailure { exception ->
+                    logd("카트 아이템 추가 실패: ${exception.message}")
+                    emitEffect(GroupCartEffect.ShowError("아이템 추가에 실패했습니다"))
+                }
+        }
     }
 } 

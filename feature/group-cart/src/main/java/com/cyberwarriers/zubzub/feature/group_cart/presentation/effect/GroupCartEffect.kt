@@ -5,7 +5,6 @@ package com.cyberwarriers.zubzub.feature.group_cart.presentation.effect
  */
 sealed class GroupCartEffect {
     object NavigateBack : GroupCartEffect()
-    object NavigateToAddItem : GroupCartEffect()
     data class NavigateToMemberDetail(val memberId: String) : GroupCartEffect()
     object NavigateToGroupSettings : GroupCartEffect()
     data class ShowError(val message: String) : GroupCartEffect()
