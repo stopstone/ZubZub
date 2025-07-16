@@ -65,15 +65,4 @@ fun GroupCartHeaderPreview() {
             progress = 0.6f
         )
     }
-}
-
-@Preview
-@Composable
-fun ProgressBarPreview() {
-    ZubZubTheme {
-        ProgressBar(
-            progress = 0.75f,
-            modifier = Modifier.padding(16.dp)
-        )
-    }
 } 
