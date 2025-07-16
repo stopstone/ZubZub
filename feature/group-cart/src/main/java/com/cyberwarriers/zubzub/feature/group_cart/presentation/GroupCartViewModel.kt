@@ -51,13 +51,19 @@ class GroupCartViewModel @Inject constructor(
     }
 
     /**
-     * 진행률 계산
+     * 진행률 계산 (완료된 아이템 수 / 전체 아이템 수)
+     * @param cartItems 카트 아이템 리스트
+     * @return 진행률 (0.0 ~ 1.0)
      */
     private fun calculateProgress(cartItems: List<CartItem>): Float {
         if (cartItems.isEmpty()) return 0f
 
         val completedItems = cartItems.count { it.isCompleted }
-        return completedItems.toFloat() / cartItems.size
+        val progress = completedItems.toFloat() / cartItems.size
+        
+        logd("진행률 계산: ${completedItems}개 완료 / ${cartItems.size}개 전체 = ${(progress * 100).toInt()}%")
+        
+        return progress
     }
 
     /**

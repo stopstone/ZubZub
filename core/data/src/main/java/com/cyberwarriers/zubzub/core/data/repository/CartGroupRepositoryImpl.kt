@@ -108,50 +108,22 @@ class CartGroupRepositoryImpl @Inject constructor(
                 if (snapshot != null) {
                     val groups = snapshot.documents.mapNotNull { document ->
                         try {
-                            document.toObject(CartGroupFirebaseEntity::class.java)
+                            val entity = document.toObject(CartGroupFirebaseEntity::class.java)
                                 ?.copy(groupId = document.id)
-                                ?.toSummary(userId)
+                            
+                            entity?.toSummary(userId)
                         } catch (e: Exception) {
                             logd("그룹 변환 실패: ${e.message}")
                             null
                         }
                     }
-                    
-                    logd("실시간 그룹 업데이트: ${groups.size}개")
                     trySend(groups)
                 }
             }
         
-        // 리스너 정리 (Flow 종료시 자동 호출)
         awaitClose {
-            logd("🧹 실시간 그룹 목록 리스너 해제")
+            logd("실시간 그룹 목록 리스너 해제")
             listener.remove()
-        }
-    }
-
-    /**
-     * 특정 그룹 상세 정보 조회
-     */
-    suspend fun getGroupDetail(groupId: String): Result<CartGroupFirebaseEntity?> {
-        return try {
-            logd("그룹 상세 조회: $groupId")
-            
-            val snapshot = firestore.collection(CART_GROUPS_COLLECTION)
-                .document(groupId)
-                .get()
-                .await()
-            
-            if (snapshot.exists()) {
-                val group = snapshot.toObject(CartGroupFirebaseEntity::class.java)
-                    ?.copy(groupId = snapshot.id)
-                Result.success(group)
-            } else {
-                Result.success(null)
-            }
-            
-        } catch (e: Exception) {
-            logd("그룹 상세 조회 실패: ${e.message}")
-            Result.failure(e)
         }
     }
 
