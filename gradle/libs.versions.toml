@@ -1,5 +1,5 @@
 [versions]
-datastorePreferences = "1.1.5"
+datastorePreferences = "1.1.1"
 firebaseBom = "33.15.0"
 kotlin = "2.0.21"
 agp = "8.9.2"
@@ -41,6 +41,7 @@ googleGmsGoogleServices = "4.4.3"
 [libraries]
 # Coroutines
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
+androidx-datastore-preferences-core = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastorePreferences" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hilt" }
 coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
