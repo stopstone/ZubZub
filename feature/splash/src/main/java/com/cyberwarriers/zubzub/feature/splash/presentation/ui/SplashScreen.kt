@@ -15,7 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.core.util.logd
 import com.cyberwarriers.zubzub.feature.splash.presentation.effect.SplashEffect
@@ -25,7 +25,8 @@ import com.cyberwarriers.zubzub.feature.splash.presentation.SplashViewModel
 @Composable
 fun SplashScreen(
     onNavigateToLogin: () -> Unit,
-    viewModel: SplashViewModel = viewModel()
+    onNavigateToHome: () -> Unit,
+    viewModel: SplashViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val effect by viewModel.effect.collectAsState(initial = null)
@@ -35,6 +36,10 @@ fun SplashScreen(
             SplashEffect.NavigateToLogin -> {
                 logd("스플래시 화면 종료, 로그인 화면으로 이동")
                 onNavigateToLogin()
+            }
+            SplashEffect.NavigateToHome -> {
+                logd("스플래시 화면 종료, 홈 화면으로 이동")
+                onNavigateToHome()
             }
             null -> { /* 효과 없음 */ }
         }
