@@ -5,7 +5,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.cyberwarriers.zubzub.feature.auth.data.repository.AuthRepositoryImpl
-import com.cyberwarriers.zubzub.feature.auth.domain.repository.AuthRepository
+import com.cyberwarriers.zubzub.core.domain.repository.AuthRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
