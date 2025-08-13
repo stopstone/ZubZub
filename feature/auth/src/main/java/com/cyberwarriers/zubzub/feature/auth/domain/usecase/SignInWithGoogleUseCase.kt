@@ -1,6 +1,6 @@
 package com.cyberwarriers.zubzub.feature.auth.domain.usecase
 
-import com.cyberwarriers.zubzub.feature.auth.domain.repository.AuthRepository
+import com.cyberwarriers.zubzub.core.domain.repository.AuthRepository
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import javax.inject.Inject
 

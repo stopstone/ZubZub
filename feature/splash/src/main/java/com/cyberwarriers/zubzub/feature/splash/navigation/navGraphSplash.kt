@@ -13,6 +13,11 @@ fun NavGraphBuilder.navGraphSplash(navController: NavController) {
                 navController.navigate(Route.Login) {
                     popUpTo(Route.Splash) { inclusive = true }
                 }
+            },
+            onNavigateToHome = {
+                navController.navigate(Route.Main) {
+                    popUpTo(Route.Splash) { inclusive = true }
+                }
             }
         )
     }
