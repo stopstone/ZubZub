@@ -11,6 +11,8 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":core:util"))
     implementation(project(":core:navigation"))
+    implementation(project(":core:domain"))
+    implementation(project(":core:data"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -34,4 +36,6 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.compose)
     // Navigation
     implementation(libs.androidx.navigation)
+    implementation(libs.androidx.hilt.navigation.compose)
+
 }
