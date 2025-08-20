@@ -37,7 +37,7 @@ class CreateProfileUseCase @Inject constructor(
                 else -> {
                     val request = CreateProfileRequest(
                         profileName = profileName.trim(),
-                        profileImageUrl = profileImageUrl
+                        profileImageUrl = profileImageUrl,
                     )
                     profileRepository.createProfile(request)
                 }
