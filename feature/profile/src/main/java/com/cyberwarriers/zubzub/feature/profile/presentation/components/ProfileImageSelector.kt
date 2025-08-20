@@ -3,12 +3,18 @@ package com.cyberwarriers.zubzub.feature.profile.presentation.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,33 +81,7 @@ fun ProfileImageSelector(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            
-            // 카메라 아이콘 오버레이
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .align(Alignment.BottomEnd)
-                    .offset(x = (-4).dp, y = (-4).dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.PhotoCamera,
-                    contentDescription = "이미지 선택",
-                    modifier = Modifier.size(16.dp),
-                    tint = Color.White
-                )
-            }
         }
-        
-        // 안내 텍스트
-        Text(
-            text = "탭하여 이미지 선택 (선택사항)",
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp)
-        )
     }
 }
 
