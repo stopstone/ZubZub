@@ -17,6 +17,7 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":feature:splash"))
     implementation(project(":feature:auth"))
+    implementation(project(":feature:profile"))
     implementation(project(":feature:main"))
     implementation(project(":feature:home"))
     implementation(project(":feature:group-create"))
