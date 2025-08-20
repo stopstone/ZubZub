@@ -90,4 +90,11 @@ interface AuthRepository {
      * @return 업데이트 결과
      */
     suspend fun updateUserInFirestore(user: User): Result<Unit>
+    
+    /**
+     * 현재 사용자가 프로필을 가지고 있는지 확인합니다.
+     * 
+     * @return 프로필 존재 여부
+     */
+    suspend fun hasUserProfile(): Result<Boolean>
 }

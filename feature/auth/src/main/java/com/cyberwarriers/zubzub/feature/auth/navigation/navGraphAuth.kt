@@ -15,6 +15,12 @@ fun NavGraphBuilder.navGraphAuth(navController: NavController) {
                     popUpTo(Route.Login) { inclusive = true }
                 }
                 logd("홈 화면으로 이동")
+            },
+            onNavigateToProfileCreate = {
+                navController.navigate(Route.ProfileCreate) {
+                    popUpTo(Route.Login) { inclusive = true }
+                }
+                logd("프로필 생성 화면으로 이동")
             }
         )
     }
