@@ -18,6 +18,11 @@ fun NavGraphBuilder.navGraphSplash(navController: NavController) {
                 navController.navigate(Route.Main) {
                     popUpTo(Route.Splash) { inclusive = true }
                 }
+            },
+            onNavigateToProfileCreate = {
+                navController.navigate(Route.ProfileCreate) {
+                    popUpTo(Route.Splash) { inclusive = true }
+                }
             }
         )
     }

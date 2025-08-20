@@ -15,6 +15,7 @@ import com.cyberwarriers.zubzub.feature.splash.navigation.navGraphSplash
 import com.cyberwarriers.zubzub.feature.group_create.navigation.navGraphGroupCreate
 import com.cyberwarriers.zubzub.feature.group_enter.navigation.navGraphGroupEnter
 import com.cyberwarriers.zubzub.feature.group_cart.navigation.navGroupCartGraph
+import com.cyberwarriers.zubzub.feature.profile.navigation.navGraphProfile
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -39,6 +40,7 @@ fun ZubZubApp() {
     ) {
         navGraphSplash(navController)
         navGraphAuth(navController)
+        navGraphProfile(navController)
         navGraphMain(navController)
         navGraphGroupCreate(navController)
         navGraphGroupEnter(navController)

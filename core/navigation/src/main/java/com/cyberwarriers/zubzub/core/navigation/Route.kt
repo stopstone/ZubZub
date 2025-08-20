@@ -7,6 +7,9 @@ object Route {
     // 인증
     const val Login = "login"
 
+    // 프로필 생성
+    const val ProfileCreate = "profile_create"
+
     // 메인 화면
     const val Main = "main"
 

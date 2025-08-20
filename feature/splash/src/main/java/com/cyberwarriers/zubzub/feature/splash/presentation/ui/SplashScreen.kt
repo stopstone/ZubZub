@@ -26,6 +26,7 @@ import com.cyberwarriers.zubzub.feature.splash.presentation.SplashViewModel
 fun SplashScreen(
     onNavigateToLogin: () -> Unit,
     onNavigateToHome: () -> Unit,
+    onNavigateToProfileCreate: () -> Unit = {},
     viewModel: SplashViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -40,6 +41,10 @@ fun SplashScreen(
             SplashEffect.NavigateToHome -> {
                 logd("스플래시 화면 종료, 홈 화면으로 이동")
                 onNavigateToHome()
+            }
+            SplashEffect.NavigateToProfileCreate -> {
+                logd("스플래시 화면 종료, 프로필 생성 화면으로 이동")
+                onNavigateToProfileCreate()
             }
             null -> { /* 효과 없음 */ }
         }

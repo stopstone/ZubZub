@@ -49,10 +49,8 @@ class SplashViewModel @Inject constructor(
                 logd("DataStore 로그인 상태 확인: $isLoggedIn")
                 
                 if (isLoggedIn) {
-                    // 로그인된 상태라면 홈 화면으로 이동
-                    _state.value = SplashState.Loaded
-                    _effect.value = SplashEffect.NavigateToHome
-                    logd("자동 로그인 성공 - 홈 화면으로 이동")
+                    // 로그인된 상태라면 프로필 존재 여부 확인
+                    checkUserProfileAndNavigate()
                 } else {
                     // 로그인되지 않은 상태라면 로그인 화면으로 이동
                     _state.value = SplashState.Loaded
@@ -66,5 +64,32 @@ class SplashViewModel @Inject constructor(
                 _effect.value = SplashEffect.NavigateToLogin
             }
         }
+    }
+    
+    /**
+     * 사용자 프로필 존재 여부를 확인하고 적절한 화면으로 네비게이션
+     */
+    private suspend fun checkUserProfileAndNavigate() {
+        authRepository.hasUserProfile()
+            .onSuccess { hasProfile ->
+                _state.value = SplashState.Loaded
+                if (hasProfile) {
+                    _effect.value = SplashEffect.NavigateToHome
+                    logd("기존 사용자 - 홈 화면으로 이동")
+                } else {
+                    _effect.value = SplashEffect.NavigateToProfileCreate
+                    logd("새 사용자 - 프로필 생성 화면으로 이동")
+                }
+            }
+            .onFailure { exception ->
+                // 프로필 확인 실패 시에도 홈으로 이동 (fallback)
+                _state.value = SplashState.Loaded
+                _effect.value = SplashEffect.NavigateToHome
+                logd("프로필 확인 실패하지만 홈으로 이동: ${exception.message}")
+            }
+    }
+
+    fun consumeEffect() {
+        _effect.value = null
     }
 }
