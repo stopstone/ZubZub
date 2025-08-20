@@ -15,11 +15,14 @@ object ProfileMapper {
      */
     fun ProfileFirebaseEntity.toDomain(): Profile {
         return Profile(
+            profileId = profileId,
             userId = userId,
             profileName = profileName,
             profileImageUrl = profileImageUrl,
+            isDefault = isDefault,
+            isActive = isActive,
             createdAt = createdAt?.seconds ?: 0L,
-            updatedAt = updatedAt?.seconds ?: 0L
+            updatedAt = updatedAt?.seconds ?: 0L,
         )
     }
     
@@ -28,9 +31,12 @@ object ProfileMapper {
      */
     fun Profile.toFirebaseEntity(): ProfileFirebaseEntity {
         return ProfileFirebaseEntity(
+            profileId = profileId,
             userId = userId,
             profileName = profileName,
-            profileImageUrl = profileImageUrl
+            profileImageUrl = profileImageUrl,
+            isDefault = isDefault,
+            isActive = isActive,
         )
     }
 }

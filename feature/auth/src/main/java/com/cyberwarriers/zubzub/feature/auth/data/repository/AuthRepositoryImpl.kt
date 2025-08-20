@@ -45,7 +45,7 @@ class AuthRepositoryImpl @Inject constructor(
                     provider = "google",
                     createdAt = Timestamp.now().seconds,
                     updatedAt = Timestamp.now().seconds,
-                    isActive = true
+                    isActive = true,
                 )
                 
                 // DataStore에 로그인 정보 저장
@@ -54,7 +54,7 @@ class AuthRepositoryImpl @Inject constructor(
                     email = firebaseUser.email ?: "",
                     displayName = firebaseUser.displayName ?: "",
                     profileImageUrl = firebaseUser.photoUrl?.toString() ?: "",
-                    provider = "google"
+                    provider = "google",
                 )
                 
                 // 기존 사용자인지 확인하고, 새 사용자라면 Firestore에 저장
@@ -66,7 +66,7 @@ class AuthRepositoryImpl @Inject constructor(
                     }
                 } else {
                     logd("기존 사용자 - 마지막 로그인 시간 업데이트: ${existingUser.email}")
-                    updateUserInFirestore(existingUser.copy(updatedAt = Timestamp.now().seconds)).onFailure { error ->
+                    updateUserInFirestore(existingUser.copy(updatedAt = Timestamp.now().seconds,)).onFailure { error ->
                         logd("Firestore 업데이트 실패하지만 로그인은 계속: ${error.message}")
                     }
                 }
@@ -108,7 +108,8 @@ class AuthRepositoryImpl @Inject constructor(
             "provider" to user.provider,
             "createdAt" to Timestamp(user.createdAt, 0),
             "updatedAt" to Timestamp(user.updatedAt, 0),
-            "isActive" to user.isActive
+            "isActive" to user.isActive,
+            "hasProfile" to user.hasProfile,
         )
         
         firestore.collection(USERS_COLLECTION)
@@ -142,7 +143,8 @@ class AuthRepositoryImpl @Inject constructor(
                 provider = document.getString("provider") ?: "",
                 createdAt = createdAt,
                 updatedAt = updatedAt,
-                isActive = document.getBoolean("isActive") ?: true
+                isActive = document.getBoolean("isActive") ?: true,
+                hasProfile = document.getBoolean("hasProfile") ?: false,
             )
         } else {
             null
@@ -166,7 +168,8 @@ class AuthRepositoryImpl @Inject constructor(
             "provider" to user.provider,
             "createdAt" to Timestamp(user.createdAt, 0),
             "updatedAt" to Timestamp(user.updatedAt, 0),
-            "isActive" to user.isActive
+            "isActive" to user.isActive,
+            "hasProfile" to user.hasProfile,
         )
         
         firestore.collection(USERS_COLLECTION)
@@ -195,7 +198,7 @@ class AuthRepositoryImpl @Inject constructor(
                 email = email,
                 displayName = displayName,
                 profileImageUrl = profileImageUrl,
-                provider = provider
+                provider = provider,
             )
             logd("사용자 로그인 정보 DataStore 저장 완료: $email")
         } catch (e: Exception) {
@@ -223,14 +226,17 @@ class AuthRepositoryImpl @Inject constructor(
             
             val userId = currentUser.uid
             
-            // profiles 컬렉션에서 해당 사용자의 프로필 문서 존재 확인
-            val profileDoc = firestore.collection(PROFILES_COLLECTION)
-                .document(userId)
+            // profiles 컬렉션에서 해당 사용자의 활성 기본 프로필 존재 확인
+            val querySnapshot = firestore.collection(PROFILES_COLLECTION)
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("isDefault", true)
+                .whereEqualTo("isActive", true)
+                .limit(1)
                 .get()
                 .await()
             
-            val hasProfile = profileDoc.exists()
-            logd("사용자 프로필 존재 여부: $hasProfile")
+            val hasProfile = !querySnapshot.isEmpty
+            logd("사용자 기본 프로필 존재 여부: $hasProfile")
             
             Result.success(hasProfile)
             

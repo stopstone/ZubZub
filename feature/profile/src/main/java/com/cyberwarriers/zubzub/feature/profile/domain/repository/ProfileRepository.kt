@@ -28,11 +28,33 @@ interface ProfileRepository {
     suspend fun updateProfile(request: UpdateProfileRequest): Result<Profile>
     
     /**
-     * 현재 사용자의 프로필을 조회합니다.
+     * 현재 사용자의 기본 프로필을 조회합니다.
      * 
+     * @return 기본 프로필 정보 (없는 경우 null)
+     */
+    suspend fun getDefaultProfile(): Result<Profile?>
+    
+    /**
+     * 현재 사용자의 모든 활성 프로필을 조회합니다.
+     * 
+     * @return 프로필 목록
+     */
+    suspend fun getAllProfiles(): Result<List<Profile>>
+    
+    /**
+     * 특정 프로필을 조회합니다.
+     * 
+     * @param profileId 조회할 프로필 ID
      * @return 프로필 정보 (없는 경우 null)
      */
-    suspend fun getProfile(): Result<Profile?>
+    suspend fun getProfileById(profileId: String): Result<Profile?>
+    
+    /**
+     * 사용자가 프로필을 가지고 있는지 확인합니다.
+     * 
+     * @return 프로필 존재 여부
+     */
+    suspend fun hasProfile(): Result<Boolean>
     
     /**
      * 프로필 이미지를 업로드합니다.
