@@ -38,6 +38,7 @@ import com.google.android.gms.common.api.ApiException
 @Composable
 fun LoginScreen(
     onNavigateToHome: () -> Unit,
+    onNavigateToProfileCreate: () -> Unit = {},
     viewModel: LoginViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -80,6 +81,11 @@ fun LoginScreen(
         when (effect) {
             LoginEffect.NavigateToHome -> {
                 onNavigateToHome()
+                viewModel.consumeEffect()
+            }
+            
+            LoginEffect.NavigateToProfileCreate -> {
+                onNavigateToProfileCreate()
                 viewModel.consumeEffect()
             }
 

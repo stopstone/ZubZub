@@ -21,6 +21,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     companion object {
         private const val USERS_COLLECTION = "users"
+        private const val PROFILES_COLLECTION = "profiles"
     }
 
     // 구글 소셜 로그인
@@ -213,5 +214,29 @@ class AuthRepositoryImpl @Inject constructor(
     
     override fun isUserLoggedInFromDataStore(): Flow<Boolean> {
         return userPreferences.isLoggedIn
+    }
+    
+    override suspend fun hasUserProfile(): Result<Boolean> {
+        return try {
+            val currentUser = firebaseAuth.currentUser
+                ?: return Result.failure(Exception("로그인이 필요합니다."))
+            
+            val userId = currentUser.uid
+            
+            // profiles 컬렉션에서 해당 사용자의 프로필 문서 존재 확인
+            val profileDoc = firestore.collection(PROFILES_COLLECTION)
+                .document(userId)
+                .get()
+                .await()
+            
+            val hasProfile = profileDoc.exists()
+            logd("사용자 프로필 존재 여부: $hasProfile")
+            
+            Result.success(hasProfile)
+            
+        } catch (e: Exception) {
+            logd("프로필 존재 여부 확인 실패: ${e.message}")
+            Result.failure(e)
+        }
     }
 }
