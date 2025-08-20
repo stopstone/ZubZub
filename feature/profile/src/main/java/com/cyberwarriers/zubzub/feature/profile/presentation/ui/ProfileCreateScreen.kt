@@ -70,7 +70,7 @@ fun ProfileCreateScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "프로필 설정",
+                        text = "프로필 생성",
                         fontWeight = FontWeight.SemiBold
                     )
                 }
