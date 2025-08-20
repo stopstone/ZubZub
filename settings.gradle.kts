@@ -30,3 +30,4 @@ include(":feature:group-create")
 
 include(":feature:group-enter")
 include(":feature:group-cart")
+include(":feature:profile")
