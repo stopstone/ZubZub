@@ -5,7 +5,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.cyberwarriers.zubzub.core.util.logd
-import com.cyberwarriers.zubzub.feature.profile.domain.repository.GalleryRepository
+import com.cyberwarriers.zubzub.feature.profile.domain.usecase.CheckGalleryPermissionUseCase
+import com.cyberwarriers.zubzub.feature.profile.domain.usecase.GetGalleryImagesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +26,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class ImagePickerViewModel @Inject constructor(
-    private val galleryRepository: GalleryRepository,
+    private val getGalleryImagesUseCase: GetGalleryImagesUseCase,
+    private val checkGalleryPermissionUseCase: CheckGalleryPermissionUseCase
 ): ViewModel() {
     
     // 선택된 이미지 URI 상태
@@ -45,8 +47,7 @@ class ImagePickerViewModel @Inject constructor(
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
     
     // 페이징된 갤러리 이미지 플로우 (ViewModel 스코프에서 캐시)
-    val galleryImages: Flow<PagingData<String>> = galleryRepository
-        .getProfileGalleryImages()
+    val galleryImages: Flow<PagingData<String>> = getGalleryImagesUseCase()
         .cachedIn(viewModelScope)
     
     init {
@@ -57,30 +58,38 @@ class ImagePickerViewModel @Inject constructor(
      * 갤러리 권한 상태를 확인합니다.
      */
     fun checkPermission() = viewModelScope.launch {
-        try {
-            _isLoading.value = true
-            _errorMessage.value = null
-            
-            val permission = galleryRepository.checkGalleryPermission()
-            _hasPermission.value = permission
-            
-            logd("권한 확인 완료: $permission")
-        } catch (e: Exception) {
-            _errorMessage.value = "권한 확인 중 오류가 발생했습니다."
-            logd("권한 확인 실패: ${e.message}")
-        } finally {
-            _isLoading.value = false
-        }
+        _isLoading.value = true
+        _errorMessage.value = null
+        
+        checkGalleryPermissionUseCase()
+            .onSuccess { hasPermission ->
+                _hasPermission.value = hasPermission
+                logd("권한 확인 완료: $hasPermission")
+            }
+            .onFailure { exception ->
+                _errorMessage.value = "권한 확인 중 오류가 발생했습니다."
+                _hasPermission.value = false
+                logd("권한 확인 실패: ${exception.message}")
+            }
+        
+        _isLoading.value = false
     }
     
     /**
-     * 이미지를 선택합니다.
+     * 이미지를 선택하거나 선택 해제합니다 (토글).
      * 
      * @param imageUri 선택할 이미지 URI
      */
     fun selectImage(imageUri: String) {
-        _selectedImageUri.value = imageUri
-        logd("이미지 선택됨: $imageUri")
+        if (_selectedImageUri.value == imageUri) {
+            // 이미 선택된 이미지를 다시 클릭하면 선택 해제
+            _selectedImageUri.value = null
+            logd("이미지 선택 해제됨: $imageUri")
+        } else {
+            // 새로운 이미지 선택
+            _selectedImageUri.value = imageUri
+            logd("이미지 선택됨: $imageUri")
+        }
     }
     
     /**
@@ -89,18 +98,6 @@ class ImagePickerViewModel @Inject constructor(
     fun clearSelection() {
         _selectedImageUri.value = null
         logd("이미지 선택 초기화")
-    }
-    
-    /**
-     * 첫 번째 이미지를 기본 선택으로 설정합니다.
-     * 
-     * @param imageUri 기본으로 설정할 이미지 URI
-     */
-    fun setFirstImageAsDefault(imageUri: String) {
-        if (_selectedImageUri.value == null) {
-            _selectedImageUri.value = imageUri
-            logd("첫 번째 이미지 기본 선택: $imageUri")
-        }
     }
     
     /**
