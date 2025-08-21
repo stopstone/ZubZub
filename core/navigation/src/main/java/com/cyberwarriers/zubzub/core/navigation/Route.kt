@@ -10,16 +10,7 @@ object Route {
     const val Login = "login"
 
     // 프로필 생성
-    const val ProfileCreate = "profile_create?selectedImageUri={selectedImageUri}"
-    
-    // 프로필 생성 네비게이션 (선택된 이미지 URI 포함)
-    fun profileCreate(selectedImageUri: String? = null): String {
-        return if (selectedImageUri != null && selectedImageUri.isNotEmpty()) {
-            "profile_create?selectedImageUri=${URLEncoder.encode(selectedImageUri, "UTF-8")}"
-        } else {
-            "profile_create"
-        }
-    }
+    const val ProfileCreate = "profile_create"
     
     // 이미지 선택
     const val ImagePicker = "image_picker?currentImageUri={currentImageUri}"

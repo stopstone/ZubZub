@@ -20,7 +20,7 @@ fun NavGraphBuilder.navGraphSplash(navController: NavController) {
                 }
             },
             onNavigateToProfileCreate = {
-                navController.navigate(Route.profileCreate()) {
+                navController.navigate(Route.ProfileCreate) {
                     popUpTo(Route.Splash) { inclusive = true }
                 }
             }
