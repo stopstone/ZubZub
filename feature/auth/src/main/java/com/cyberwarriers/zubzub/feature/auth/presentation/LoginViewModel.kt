@@ -2,7 +2,7 @@ package com.cyberwarriers.zubzub.feature.auth.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cyberwarriers.zubzub.core.domain.repository.AuthRepository
+import com.cyberwarriers.zubzub.core.domain.usecase.CheckUserProfileUseCase
 import com.cyberwarriers.zubzub.core.util.logd
 import com.cyberwarriers.zubzub.feature.auth.domain.usecase.SignInWithGoogleUseCase
 import com.cyberwarriers.zubzub.feature.auth.presentation.effect.LoginEffect
@@ -18,7 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
-    private val authRepository: AuthRepository
+    private val checkUserProfileUseCase: CheckUserProfileUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<LoginState>(LoginState.Initial)
@@ -53,7 +53,7 @@ class LoginViewModel @Inject constructor(
      * 사용자 프로필 존재 여부를 확인하고 적절한 화면으로 네비게이션
      */
     private suspend fun checkUserProfileAndNavigate() {
-        authRepository.hasUserProfile()
+        checkUserProfileUseCase()
             .onSuccess { hasProfile ->
                 _state.value = LoginState.Success
                 if (hasProfile) {
