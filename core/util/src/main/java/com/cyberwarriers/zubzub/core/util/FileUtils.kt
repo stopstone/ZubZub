@@ -2,6 +2,10 @@ package com.cyberwarriers.zubzub.core.util
 
 import android.content.ContentResolver
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import android.provider.MediaStore
 import android.webkit.MimeTypeMap
@@ -23,6 +27,7 @@ object FileUtils {
     
     private const val TEMP_DIR_NAME = "temp_images"
     private const val MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+    private const val PROFILE_IMAGE_SIZE = 240 // 240x240
     
     /**
      * Content URI를 임시 파일로 복사합니다.
@@ -45,20 +50,14 @@ object FileUtils {
             val extension = getFileExtensionFromMimeType(mimeType) ?: "jpg"
             val finalFileName = if (fileName.contains(".")) fileName else "$fileName.$extension"
             
-            // 임시 파일 생성
+            // 임시 파일 생성 (압축된 이미지 저장용)
             val tempFile = createTempFile(context, finalFileName)
             
-            // URI에서 파일로 복사
-            contentResolver.openInputStream(uri)?.use { inputStream ->
-                FileOutputStream(tempFile).use { outputStream ->
-                    inputStream.copyTo(outputStream)
-                }
-            }
-            
-            // 파일 크기 검증
-            if (tempFile.length() > MAX_FILE_SIZE) {
+            // 이미지 압축 및 저장
+            val compressedSuccess = compressAndSaveImage(context, uri, tempFile)
+            if (!compressedSuccess) {
                 tempFile.delete()
-                logd("파일 크기가 너무 큽니다: ${tempFile.length()} bytes")
+                logd("이미지 압축 실패")
                 return null
             }
             
@@ -195,5 +194,123 @@ object FileUtils {
     fun isImageFile(filePath: String): Boolean {
         val extension = File(filePath).extension.lowercase()
         return extension in listOf("jpg", "jpeg", "png", "gif", "bmp", "webp")
+    }
+    
+    /**
+     * 이미지를 압축하여 저장합니다.
+     * 
+     * @param context Android Context
+     * @param sourceUri 원본 이미지 URI
+     * @param targetFile 저장할 파일
+     * @return 압축 성공 여부
+     */
+    private fun compressAndSaveImage(context: Context, sourceUri: Uri, targetFile: File): Boolean {
+        return try {
+            val contentResolver = context.contentResolver
+            
+            // 원본 이미지를 Bitmap으로 로드
+            val originalBitmap = contentResolver.openInputStream(sourceUri)?.use { inputStream ->
+                BitmapFactory.decodeStream(inputStream)
+            } ?: return false
+            
+            // EXIF 정보를 읽어서 회전 각도 확인
+            val rotation = getImageRotation(context, sourceUri)
+            
+            // 이미지 회전 적용
+            val rotatedBitmap = if (rotation != 0) {
+                rotateBitmap(originalBitmap, rotation)
+            } else {
+                originalBitmap
+            }
+            
+            // 240x240으로 리사이즈 (정사각형, 크롭)
+            val resizedBitmap = resizeImageToSquare(rotatedBitmap, PROFILE_IMAGE_SIZE)
+            
+            // JPEG로 압축하여 저장 (품질 85%)
+            FileOutputStream(targetFile).use { outputStream ->
+                resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
+            }
+            
+            // 메모리 정리
+            if (rotatedBitmap != originalBitmap) {
+                originalBitmap.recycle()
+            }
+            resizedBitmap.recycle()
+            
+            logd("이미지 압축 완료: ${targetFile.length()} bytes")
+            true
+            
+        } catch (e: Exception) {
+            logd("이미지 압축 실패: ${e.message}")
+            false
+        }
+    }
+    
+    /**
+     * 이미지의 EXIF 회전 정보를 가져옵니다.
+     * 
+     * @param context Android Context
+     * @param uri 이미지 URI
+     * @return 회전 각도
+     */
+    private fun getImageRotation(context: Context, uri: Uri): Int {
+        return try {
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                val exif = ExifInterface(inputStream)
+                when (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+                    ExifInterface.ORIENTATION_ROTATE_90 -> 90
+                    ExifInterface.ORIENTATION_ROTATE_180 -> 180
+                    ExifInterface.ORIENTATION_ROTATE_270 -> 270
+                    else -> 0
+                }
+            } ?: 0
+        } catch (e: Exception) {
+            logd("EXIF 정보 읽기 실패: ${e.message}")
+            0
+        }
+    }
+    
+    /**
+     * Bitmap을 회전시킵니다.
+     * 
+     * @param bitmap 원본 Bitmap
+     * @param degrees 회전 각도
+     * @return 회전된 Bitmap
+     */
+    private fun rotateBitmap(bitmap: Bitmap, degrees: Int): Bitmap {
+        val matrix = Matrix().apply {
+            postRotate(degrees.toFloat())
+        }
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+    }
+    
+    /**
+     * 이미지를 정사각형으로 리사이즈합니다 (중앙 크롭).
+     * 
+     * @param bitmap 원본 Bitmap
+     * @param targetSize 목표 크기
+     * @return 리사이즈된 Bitmap
+     */
+    private fun resizeImageToSquare(bitmap: Bitmap, targetSize: Int): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+        
+        // 정사각형 크롭을 위한 크기 계산
+        val size = minOf(width, height)
+        val x = (width - size) / 2
+        val y = (height - size) / 2
+        
+        // 정사각형으로 크롭
+        val croppedBitmap = Bitmap.createBitmap(bitmap, x, y, size, size)
+        
+        // 목표 크기로 스케일
+        val scaledBitmap = Bitmap.createScaledBitmap(croppedBitmap, targetSize, targetSize, true)
+        
+        // 메모리 정리
+        if (croppedBitmap != bitmap) {
+            croppedBitmap.recycle()
+        }
+        
+        return scaledBitmap
     }
 }
