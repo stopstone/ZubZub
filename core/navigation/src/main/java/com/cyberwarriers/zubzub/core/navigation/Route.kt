@@ -9,6 +9,9 @@ object Route {
 
     // 프로필 생성
     const val ProfileCreate = "profile_create"
+    
+    // 이미지 선택
+    const val ImagePicker = "image_picker"
 
     // 메인 화면
     const val Main = "main"
