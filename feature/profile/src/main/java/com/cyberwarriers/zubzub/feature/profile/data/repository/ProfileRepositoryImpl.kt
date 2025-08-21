@@ -1,6 +1,8 @@
 package com.cyberwarriers.zubzub.feature.profile.data.repository
 
+import android.content.Context
 import com.cyberwarriers.zubzub.core.domain.repository.AuthRepository
+import com.cyberwarriers.zubzub.core.util.FileUtils
 import com.cyberwarriers.zubzub.core.util.logd
 import com.cyberwarriers.zubzub.feature.profile.data.mapper.ProfileMapper.toDomain
 import com.cyberwarriers.zubzub.feature.profile.data.model.ProfileFirebaseEntity
@@ -11,7 +13,10 @@ import com.cyberwarriers.zubzub.feature.profile.domain.repository.ProfileReposit
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.storage.FirebaseStorage
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
+import java.io.File
 import java.util.UUID
 import javax.inject.Inject
 
@@ -19,17 +24,21 @@ import javax.inject.Inject
  * 프로필 레포지토리 구현체
  * 
  * Firebase Firestore를 사용하여 프로필 정보를 관리
+ * Firebase Storage를 사용하여 이미지 업로드
  * 트랜잭션을 사용하여 데이터 일관성을 보장하고 다중 프로필을 지원
  */
 class ProfileRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val firebaseAuth: FirebaseAuth,
-    private val authRepository: AuthRepository
+    private val firebaseStorage: FirebaseStorage,
+    private val authRepository: AuthRepository,
+    @ApplicationContext private val context: Context
 ) : ProfileRepository {
     
     companion object {
         private const val PROFILES_COLLECTION = "profiles"
         private const val USERS_COLLECTION = "users"
+        private const val STORAGE_PROFILE_IMAGES_PATH = "profile_images"
     }
     
     override suspend fun createProfile(request: CreateProfileRequest): Result<Profile> {
@@ -218,15 +227,58 @@ class ProfileRepositoryImpl @Inject constructor(
     }
     
     override suspend fun uploadProfileImage(imageUri: String): Result<String> {
-        // TODO: Firebase Storage 구현 시 이미지 업로드 로직 추가
-        // 현재는 기본 이미지 URL 반환
         return try {
-            logd("프로필 이미지 업로드: $imageUri")
-            // 임시로 기본 URL 반환
-            Result.success("")
+            logd("프로필 이미지 업로드 시작: $imageUri")
+            
+            val currentUser = firebaseAuth.currentUser
+                ?: return Result.failure(Exception("로그인이 필요합니다."))
+            
+            val userId = currentUser.uid
+            
+            // Content URI인지 확인
+            if (!imageUri.startsWith("content://")) {
+                return Result.failure(Exception("올바르지 않은 이미지 URI입니다."))
+            }
+            
+            // Content URI를 임시 파일로 복사
+            val tempFilePath = FileUtils.copyContentUriToTempFile(context, imageUri)
+                ?: return Result.failure(Exception("이미지 파일을 처리할 수 없습니다."))
+            
+            val tempFile = File(tempFilePath)
+            
+            try {
+                // 이미지 파일인지 확인
+                if (!FileUtils.isImageFile(tempFilePath)) {
+                    return Result.failure(Exception("지원하지 않는 이미지 형식입니다."))
+                }
+                
+                // Firebase Storage 참조 생성
+                val fileName = "${userId}_${System.currentTimeMillis()}.${tempFile.extension}"
+                val storageRef = firebaseStorage.reference
+                    .child(STORAGE_PROFILE_IMAGES_PATH)
+                    .child(fileName)
+                
+                logd("Firebase Storage에 업로드 중: $fileName")
+                
+                // 파일 업로드
+                val uploadTask = storageRef.putFile(android.net.Uri.fromFile(tempFile))
+                uploadTask.await()
+                
+                // 다운로드 URL 가져오기
+                val downloadUrl = storageRef.downloadUrl.await()
+                val downloadUrlString = downloadUrl.toString()
+                
+                logd("프로필 이미지 업로드 성공: $downloadUrlString")
+                Result.success(downloadUrlString)
+                
+            } finally {
+                // 임시 파일 정리
+                FileUtils.deleteFile(tempFilePath)
+            }
+            
         } catch (e: Exception) {
             logd("프로필 이미지 업로드 실패: ${e.message}")
-            Result.failure(e)
+            Result.failure(Exception("이미지 업로드에 실패했습니다: ${e.message}"))
         }
     }
 }

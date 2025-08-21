@@ -100,7 +100,7 @@ class ProfileCreateViewModel @Inject constructor(
         
         createProfileUseCase(
             profileName = currentUiState.profileName,
-            profileImageUrl = currentUiState.profileImageUrl
+            profileImageUri = currentUiState.profileImageUrl
         )
             .onSuccess { profile ->
                 _state.value = ProfileCreateState.Success
