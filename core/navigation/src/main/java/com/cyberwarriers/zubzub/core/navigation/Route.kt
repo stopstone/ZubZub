@@ -8,10 +8,28 @@ object Route {
     const val Login = "login"
 
     // 프로필 생성
-    const val ProfileCreate = "profile_create"
+    const val ProfileCreate = "profile_create?selectedImageUri={selectedImageUri}"
+    
+    // 프로필 생성 네비게이션 (선택된 이미지 URI 포함)
+    fun profileCreate(selectedImageUri: String? = null): String {
+        return if (selectedImageUri != null) {
+            "profile_create?selectedImageUri=$selectedImageUri"
+        } else {
+            "profile_create"
+        }
+    }
     
     // 이미지 선택
-    const val ImagePicker = "image_picker"
+    const val ImagePicker = "image_picker?currentImageUri={currentImageUri}"
+    
+    // 이미지 선택 네비게이션 (현재 이미지 URI 포함)
+    fun imagePicker(currentImageUri: String? = null): String {
+        return if (currentImageUri != null) {
+            "image_picker?currentImageUri=${java.net.URLEncoder.encode(currentImageUri, "UTF-8")}"
+        } else {
+            "image_picker"
+        }
+    }
 
     // 메인 화면
     const val Main = "main"

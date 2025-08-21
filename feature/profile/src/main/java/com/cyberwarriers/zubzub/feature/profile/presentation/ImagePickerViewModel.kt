@@ -25,7 +25,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class ImagePickerViewModel @Inject constructor(
-    private val galleryRepository: GalleryRepository
+    private val galleryRepository: GalleryRepository,
 ): ViewModel() {
     
     // 선택된 이미지 URI 상태
