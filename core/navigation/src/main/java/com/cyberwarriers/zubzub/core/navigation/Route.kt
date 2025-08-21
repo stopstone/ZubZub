@@ -54,7 +54,7 @@ object Route {
     // 바텀 네비게이션
     object BottomNav {
         const val Home = "home"
-        const val Second = "second"
+        const val Profile = "profile"
         const val Third = "third"
     }
 }

@@ -3,6 +3,7 @@ package com.cyberwarriers.zubzub.core.navigation
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.cyberwarriers.zubzub.core.navigation.Route.BottomNav
 
@@ -17,10 +18,10 @@ sealed class BottomNavItem(
         label = "Home",
     )
 
-    object Second: BottomNavItem(
-        route = BottomNav.Second,
-        icon = Icons.Default.AddCircle,
-        label = "Second",
+    object Profile: BottomNavItem(
+        route = BottomNav.Profile,
+        icon = Icons.Default.Person,
+        label = "Profile",
     )
 
     object Third: BottomNavItem(
@@ -30,7 +31,7 @@ sealed class BottomNavItem(
     )
 
     companion object {
-        val items = listOf(Home, Second, Third)
+        val items = listOf(Home, Profile, Third)
     }
 
 }

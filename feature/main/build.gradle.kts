@@ -12,6 +12,7 @@ dependencies {
     implementation(project(":core:util"))
     implementation(project(":core:navigation"))
     implementation(project(":feature:home"))
+    implementation(project(":feature:profile"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

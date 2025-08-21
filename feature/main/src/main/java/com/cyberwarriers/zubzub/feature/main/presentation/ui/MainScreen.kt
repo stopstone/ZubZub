@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -29,6 +27,7 @@ import com.cyberwarriers.zubzub.core.navigation.BottomNavItem
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubTopAppBar
 import com.cyberwarriers.zubzub.core.util.logd
 import com.cyberwarriers.zubzub.feature.home.presentation.ui.HomeScreen
+import com.cyberwarriers.zubzub.feature.profile.presentation.ui.ProfileScreen
 
 @Composable
 fun MainScreen(
@@ -79,48 +78,22 @@ fun MainScreen(
                 )
             }
 
-            composable(BottomNavItem.Second.route) {
-                SecondScreen()
+            composable(BottomNavItem.Profile.route) {
+                ProfileScreen(
+                    onProfileClick = { profileId ->
+                        logd("프로필 클릭: $profileId")
+                        // TODO: 프로필 상세 화면으로 이동
+                    },
+                    onAddProfileClick = {
+                        logd("프로필 추가 클릭")
+                        // TODO: 프로필 생성 화면으로 이동
+                    }
+                )
             }
 
             composable(BottomNavItem.Third.route) {
                 ThirdScreen()
             }
-        }
-    }
-}
-
-@Composable
-fun SecondScreen() {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color.White
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-        ) {
-            ZubZubTopAppBar(
-                title = "두번째 화면",
-                navigationIcon = Icons.Default.ArrowBack,
-                onNavigationClick = { /* TODO: 뒤로가기 처리 */ },
-                actions = {
-                    IconButton(onClick = { /* TODO: 설정 클릭 처리 */ }) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "설정"
-                        )
-                    }
-                }
-            )
-
-            Text(
-                text = "두번째 화면",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.Center)
-            )
         }
     }
 }
