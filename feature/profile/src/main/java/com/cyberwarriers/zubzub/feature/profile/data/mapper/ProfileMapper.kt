@@ -21,8 +21,8 @@ object ProfileMapper {
             profileImageUrl = profileImageUrl,
             isDefault = isDefault,
             isActive = isActive,
-            createdAt = createdAt?.seconds ?: 0L,
-            updatedAt = updatedAt?.seconds ?: 0L,
+            createdAt = createdAt,
+            updatedAt = updatedAt,
         )
     }
     
@@ -37,6 +37,8 @@ object ProfileMapper {
             profileImageUrl = profileImageUrl,
             isDefault = isDefault,
             isActive = isActive,
+            createdAt = createdAt,
+            updatedAt = updatedAt,
         )
     }
 }
