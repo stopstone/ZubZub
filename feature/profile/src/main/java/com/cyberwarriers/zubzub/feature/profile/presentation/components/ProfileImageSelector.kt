@@ -14,17 +14,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 
@@ -39,7 +36,7 @@ fun ProfileImageSelector(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
+        modifier = modifier,
     ) {
         // 프로필 이미지 영역
         Box(
@@ -55,7 +52,7 @@ fun ProfileImageSelector(
                 .clickable { onImageClick() },
             contentAlignment = Alignment.Center
         ) {
-            if (profileImageUrl.isNullOrEmpty()) {
+            if (profileImageUrl.isNotEmpty()) {
                 // 선택된 이미지 표시
                 AsyncImage(
                     model = profileImageUrl,
@@ -68,8 +65,7 @@ fun ProfileImageSelector(
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = "기본 프로필 이미지",
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    modifier = Modifier.size(80.dp),
                 )
             }
         }
