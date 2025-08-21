@@ -5,15 +5,39 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,11 +56,11 @@ import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import coil3.compose.rememberAsyncImagePainter
-import com.cyberwarriers.zubzub.core.ui.components.ZubZubLoadingProgress
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.core.util.logd
 import com.cyberwarriers.zubzub.feature.profile.data.datasource.GalleryPermissionException
 import com.cyberwarriers.zubzub.feature.profile.presentation.ImagePickerViewModel
+import kotlinx.coroutines.delay
 
 /**
  * 페이징 적용된 이미지 선택 화면
@@ -201,7 +225,7 @@ fun ImagePickerScreen(
                 .fillMaxSize()
                 .padding(paddingValues),
         ) {
-            // 상단: 선택된 이미지 미리보기 (화면의 절반)
+            // 상단: 선택된 이미지 미리보기
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -216,7 +240,7 @@ fun ImagePickerScreen(
                             painter = rememberAsyncImagePainter(selectedImageUri),
                             contentDescription = "선택된 이미지",
                             modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Fit,
+                            contentScale = ContentScale.Crop,
                         )
                     }
                     // 초기 로딩 중인 경우
@@ -334,7 +358,7 @@ fun ImagePickerScreen(
                 errorMessage?.let { message ->
                     LaunchedEffect(message) {
                         // 에러 메시지를 표시한 후 자동으로 제거
-                        kotlinx.coroutines.delay(3000)
+                        delay(3000)
                         viewModel.clearError()
                     }
                 }
@@ -375,7 +399,7 @@ private fun ErrorContent(
 }
 
 /**
- * 갤러리 이미지 아이템 (기존과 동일하지만 최적화)
+ * 갤러리 이미지 아이템
  */
 @Composable
 private fun GalleryImageItem(
@@ -401,34 +425,37 @@ private fun GalleryImageItem(
             contentScale = ContentScale.Crop,
         )
         
-        // 선택된 이미지 표시
-        if (isSelected) {
+        // 우상단 체크박스 (모든 이미지에 표시)
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(8.dp)
+                .size(28.dp)
+                .clip(CircleShape),
+            shape = CircleShape,
+            color = if (isSelected) {
+                Color(0xFF0064FF)
+            } else {
+                Color.Transparent
+            },
+            border = if (!isSelected) {
+                BorderStroke(2.dp, Color.White)
+            } else {
+                null
+            }
+        ) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                        RoundedCornerShape(8.dp),
-                    ),
-            )
-            
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(4.dp)
-                    .size(20.dp)
-                    .background(
-                        MaterialTheme.colorScheme.primary,
-                        RoundedCornerShape(10.dp),
-                    ),
-                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "✓",
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                )
+                if (isSelected) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "선택됨",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             }
         }
     }
