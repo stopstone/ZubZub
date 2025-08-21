@@ -4,6 +4,9 @@ import com.cyberwarriers.zubzub.core.data.datastore.UserPreferences
 import com.cyberwarriers.zubzub.core.domain.model.User
 import com.cyberwarriers.zubzub.core.domain.repository.AuthRepository
 import com.cyberwarriers.zubzub.core.util.logd
+import com.cyberwarriers.zubzub.feature.auth.data.mapper.UserMapper.toDomain
+import com.cyberwarriers.zubzub.feature.auth.data.mapper.UserMapper.toFirebaseEntity
+import com.cyberwarriers.zubzub.feature.auth.data.model.UserFirebaseEntity
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -99,25 +102,14 @@ class AuthRepositoryImpl @Inject constructor(
 
     // Firestore에 사용자 정보 저장
     override suspend fun saveUserToFirestore(user: User): Result<Unit> = try {
-        // whereIn 쿼리를 위해 userId 필드를 명시적으로 추가
-        val userDataWithId = mapOf(
-            "userId" to user.userId,
-            "email" to user.email,
-            "displayName" to user.displayName,
-            "profileImageUrl" to user.profileImageUrl,
-            "provider" to user.provider,
-            "createdAt" to Timestamp(user.createdAt, 0),
-            "updatedAt" to Timestamp(user.updatedAt, 0),
-            "isActive" to user.isActive,
-            "hasProfile" to user.hasProfile,
-        )
+        val userEntity = user.toFirebaseEntity()
         
         firestore.collection(USERS_COLLECTION)
             .document(user.userId)
-            .set(userDataWithId)
+            .set(userEntity)
             .await()
         
-        logd("사용자 정보 Firestore 저장 완료 (userId 필드 포함): ${user.email}")
+        logd("사용자 정보 Firestore 저장 완료: ${user.email}")
         Result.success(Unit)
     } catch (e: Exception) {
         logd("사용자 정보 Firestore 저장 실패: ${e.message}")
@@ -132,20 +124,7 @@ class AuthRepositoryImpl @Inject constructor(
             .await()
         
         val user = if (document.exists()) {
-            val createdAt = document.getTimestamp("createdAt")?.seconds ?: 0L
-            val updatedAt = document.getTimestamp("updatedAt")?.seconds ?: 0L
-            
-            User(
-                userId = document.getString("userId") ?: "",
-                email = document.getString("email") ?: "",
-                displayName = document.getString("displayName") ?: "",
-                profileImageUrl = document.getString("profileImageUrl") ?: "",
-                provider = document.getString("provider") ?: "",
-                createdAt = createdAt,
-                updatedAt = updatedAt,
-                isActive = document.getBoolean("isActive") ?: true,
-                hasProfile = document.getBoolean("hasProfile") ?: false,
-            )
+            document.toObject(UserFirebaseEntity::class.java)?.toDomain()
         } else {
             null
         }
@@ -159,25 +138,14 @@ class AuthRepositoryImpl @Inject constructor(
 
     // Firestore에서 사용자 정보 업데이트
     override suspend fun updateUserInFirestore(user: User): Result<Unit> = try {
-        // whereIn 쿼리를 위해 userId 필드를 명시적으로 추가
-        val userDataWithId = mapOf(
-            "userId" to user.userId,
-            "email" to user.email,
-            "displayName" to user.displayName,
-            "profileImageUrl" to user.profileImageUrl,
-            "provider" to user.provider,
-            "createdAt" to Timestamp(user.createdAt, 0),
-            "updatedAt" to Timestamp(user.updatedAt, 0),
-            "isActive" to user.isActive,
-            "hasProfile" to user.hasProfile,
-        )
+        val userEntity = user.toFirebaseEntity()
         
         firestore.collection(USERS_COLLECTION)
             .document(user.userId)
-            .set(userDataWithId)
+            .set(userEntity)
             .await()
         
-        logd("사용자 정보 Firestore 업데이트 완료 (userId 필드 포함): ${user.email}")
+        logd("사용자 정보 Firestore 업데이트 완료: ${user.email}")
         Result.success(Unit)
     } catch (e: Exception) {
         logd("사용자 정보 Firestore 업데이트 실패: ${e.message}")
@@ -225,17 +193,31 @@ class AuthRepositoryImpl @Inject constructor(
                 ?: return Result.failure(Exception("로그인이 필요합니다."))
             
             val userId = currentUser.uid
+            logd("프로필 존재 여부 확인 시작 - userId: $userId")
             
             // profiles 컬렉션에서 해당 사용자의 모든 활성 프로필 존재 확인
             val querySnapshot = firestore.collection(PROFILES_COLLECTION)
-                .whereEqualTo("userId", userId)
-                .whereEqualTo("isActive", true)
+                .whereEqualTo("user_id", userId)
+                .whereEqualTo("is_active", true)
                 .limit(1)
                 .get()
                 .await()
             
             val hasProfile = !querySnapshot.isEmpty
-            logd("사용자 프로필 존재 여부: $hasProfile")
+            val documentCount = querySnapshot.size()
+            logd("사용자 프로필 쿼리 결과 - 문서 개수: $documentCount, 프로필 존재: $hasProfile")
+            
+            // 실제 데이터가 있는지 전체 프로필을 확인해보기
+            val allProfilesSnapshot = firestore.collection(PROFILES_COLLECTION)
+                .whereEqualTo("user_id", userId)
+                .get()
+                .await()
+            
+            logd("전체 프로필 문서 개수: ${allProfilesSnapshot.size()}")
+            allProfilesSnapshot.documents.forEachIndexed { index, document ->
+                val data = document.data
+                logd("프로필 $index: user_id=${data?.get("user_id")}, is_active=${data?.get("is_active")}, profile_name=${data?.get("profile_name")}")
+            }
             
             Result.success(hasProfile)
             
@@ -254,9 +236,9 @@ class AuthRepositoryImpl @Inject constructor(
             
             // 기본 프로필이 있는지 확인
             val defaultProfileQuery = firestore.collection(PROFILES_COLLECTION)
-                .whereEqualTo("userId", userId)
-                .whereEqualTo("isDefault", true)
-                .whereEqualTo("isActive", true)
+                .whereEqualTo("user_id", userId)
+                .whereEqualTo("is_default", true)
+                .whereEqualTo("is_active", true)
                 .limit(1)
                 .get()
                 .await()
@@ -264,9 +246,9 @@ class AuthRepositoryImpl @Inject constructor(
             if (defaultProfileQuery.isEmpty) {
                 // 기본 프로필이 없으면 첫 번째 프로필을 기본으로 설정
                 val firstProfileQuery = firestore.collection(PROFILES_COLLECTION)
-                    .whereEqualTo("userId", userId)
-                    .whereEqualTo("isActive", true)
-                    .orderBy("createdAt")
+                    .whereEqualTo("user_id", userId)
+                    .whereEqualTo("is_active", true)
+                    .orderBy("created_at")
                     .limit(1)
                     .get()
                     .await()
@@ -278,7 +260,7 @@ class AuthRepositoryImpl @Inject constructor(
                     // 첫 번째 프로필을 기본으로 설정
                     firestore.collection(PROFILES_COLLECTION)
                         .document(firstProfileId)
-                        .update("isDefault", true)
+                        .update("is_default", true)
                         .await()
                     
                     logd("첫 번째 프로필을 기본 프로필로 설정: $firstProfileId")

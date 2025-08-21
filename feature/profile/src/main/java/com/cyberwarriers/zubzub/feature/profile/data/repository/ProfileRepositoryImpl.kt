@@ -67,10 +67,10 @@ class ProfileRepositoryImpl @Inject constructor(
                 val profileRef = firestore.collection(PROFILES_COLLECTION).document(profileId)
                 transaction.set(profileRef, profileEntity)
                 
-                // 2. users 컬렉션의 hasProfile 필드 업데이트 (첫 프로필인 경우만)
+                // 2. users 컬렉션의 has_profile 필드 업데이트 (첫 프로필인 경우만)
                 if (!hasExistingProfile) {
                     val userRef = firestore.collection(USERS_COLLECTION).document(userId)
-                    transaction.update(userRef, "hasProfile", true)
+                    transaction.update(userRef, "has_profile", true)
                 }
                 
                 profileEntity.toDomain()
@@ -130,9 +130,9 @@ class ProfileRepositoryImpl @Inject constructor(
             val userId = currentUser.uid
             
             val querySnapshot = firestore.collection(PROFILES_COLLECTION)
-                .whereEqualTo("userId", userId)
-                .whereEqualTo("isDefault", true)
-                .whereEqualTo("isActive", true)
+                .whereEqualTo("user_id", userId)
+                .whereEqualTo("is_default", true)
+                .whereEqualTo("is_active", true)
                 .limit(1)
                 .get()
                 .await()
@@ -158,9 +158,9 @@ class ProfileRepositoryImpl @Inject constructor(
             val userId = currentUser.uid
             
             val querySnapshot = firestore.collection(PROFILES_COLLECTION)
-                .whereEqualTo("userId", userId)
-                .whereEqualTo("isActive", true)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .whereEqualTo("user_id", userId)
+                .whereEqualTo("is_active", true)
+                .orderBy("created_at", Query.Direction.DESCENDING)
                 .get()
                 .await()
             
@@ -209,8 +209,8 @@ class ProfileRepositoryImpl @Inject constructor(
             val userId = currentUser.uid
             
             val querySnapshot = firestore.collection(PROFILES_COLLECTION)
-                .whereEqualTo("userId", userId)
-                .whereEqualTo("isActive", true)
+                .whereEqualTo("user_id", userId)
+                .whereEqualTo("is_active", true)
                 .limit(1)
                 .get()
                 .await()
@@ -292,9 +292,9 @@ class ProfileRepositoryImpl @Inject constructor(
             
             // 기본 프로필이 있는지 확인
             val defaultProfileQuery = firestore.collection(PROFILES_COLLECTION)
-                .whereEqualTo("userId", userId)
-                .whereEqualTo("isDefault", true)
-                .whereEqualTo("isActive", true)
+                .whereEqualTo("user_id", userId)
+                .whereEqualTo("is_default", true)
+                .whereEqualTo("is_active", true)
                 .limit(1)
                 .get()
                 .await()
@@ -302,9 +302,9 @@ class ProfileRepositoryImpl @Inject constructor(
             if (defaultProfileQuery.isEmpty) {
                 // 기본 프로필이 없으면 첫 번째 프로필을 기본으로 설정
                 val firstProfileQuery = firestore.collection(PROFILES_COLLECTION)
-                    .whereEqualTo("userId", userId)
-                    .whereEqualTo("isActive", true)
-                    .orderBy("createdAt")
+                    .whereEqualTo("user_id", userId)
+                    .whereEqualTo("is_active", true)
+                    .orderBy("created_at")
                     .limit(1)
                     .get()
                     .await()
@@ -316,7 +316,7 @@ class ProfileRepositoryImpl @Inject constructor(
                     // 첫 번째 프로필을 기본으로 설정
                     firestore.collection(PROFILES_COLLECTION)
                         .document(firstProfileId)
-                        .update("isDefault", true)
+                        .update("is_default", true)
                         .await()
                     
                     logd("첫 번째 프로필을 기본 프로필로 설정: $firstProfileId")
