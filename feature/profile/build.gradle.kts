@@ -30,6 +30,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.storage)
 
     // 컴포즈 라이브러리
     implementation(libs.androidx.lifecycle.runtime.ktx)
