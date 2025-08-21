@@ -281,4 +281,57 @@ class ProfileRepositoryImpl @Inject constructor(
             Result.failure(Exception("이미지 업로드에 실패했습니다: ${e.message}"))
         }
     }
+    
+
+    override suspend fun ensurePrimaryProfileExists(): Result<Unit> {
+        return try {
+            val currentUser = firebaseAuth.currentUser
+                ?: return Result.failure(Exception("로그인이 필요합니다."))
+            
+            val userId = currentUser.uid
+            
+            // 기본 프로필이 있는지 확인
+            val defaultProfileQuery = firestore.collection(PROFILES_COLLECTION)
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("isDefault", true)
+                .whereEqualTo("isActive", true)
+                .limit(1)
+                .get()
+                .await()
+            
+            if (defaultProfileQuery.isEmpty) {
+                // 기본 프로필이 없으면 첫 번째 프로필을 기본으로 설정
+                val firstProfileQuery = firestore.collection(PROFILES_COLLECTION)
+                    .whereEqualTo("userId", userId)
+                    .whereEqualTo("isActive", true)
+                    .orderBy("createdAt")
+                    .limit(1)
+                    .get()
+                    .await()
+                
+                if (!firstProfileQuery.isEmpty) {
+                    val firstProfile = firstProfileQuery.documents.first()
+                    val firstProfileId = firstProfile.id
+                    
+                    // 첫 번째 프로필을 기본으로 설정
+                    firestore.collection(PROFILES_COLLECTION)
+                        .document(firstProfileId)
+                        .update("isDefault", true)
+                        .await()
+                    
+                    logd("첫 번째 프로필을 기본 프로필로 설정: $firstProfileId")
+                } else {
+                    logd("설정할 프로필이 없습니다.")
+                }
+            } else {
+                logd("기본 프로필이 이미 존재합니다.")
+            }
+            
+            Result.success(Unit)
+            
+        } catch (e: Exception) {
+            logd("기본 프로필 확인/설정 실패: ${e.message}")
+            Result.failure(e)
+        }
+    }
 }

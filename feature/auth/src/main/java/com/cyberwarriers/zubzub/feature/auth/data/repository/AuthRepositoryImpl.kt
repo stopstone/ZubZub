@@ -226,8 +226,34 @@ class AuthRepositoryImpl @Inject constructor(
             
             val userId = currentUser.uid
             
-            // profiles 컬렉션에서 해당 사용자의 활성 기본 프로필 존재 확인
+            // profiles 컬렉션에서 해당 사용자의 모든 활성 프로필 존재 확인
             val querySnapshot = firestore.collection(PROFILES_COLLECTION)
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("isActive", true)
+                .limit(1)
+                .get()
+                .await()
+            
+            val hasProfile = !querySnapshot.isEmpty
+            logd("사용자 프로필 존재 여부: $hasProfile")
+            
+            Result.success(hasProfile)
+            
+        } catch (e: Exception) {
+            logd("프로필 존재 여부 확인 실패: ${e.message}")
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun ensurePrimaryProfileExists(): Result<Unit> {
+        return try {
+            val currentUser = firebaseAuth.currentUser
+                ?: return Result.failure(Exception("로그인이 필요합니다."))
+            
+            val userId = currentUser.uid
+            
+            // 기본 프로필이 있는지 확인
+            val defaultProfileQuery = firestore.collection(PROFILES_COLLECTION)
                 .whereEqualTo("userId", userId)
                 .whereEqualTo("isDefault", true)
                 .whereEqualTo("isActive", true)
@@ -235,13 +261,38 @@ class AuthRepositoryImpl @Inject constructor(
                 .get()
                 .await()
             
-            val hasProfile = !querySnapshot.isEmpty
-            logd("사용자 기본 프로필 존재 여부: $hasProfile")
+            if (defaultProfileQuery.isEmpty) {
+                // 기본 프로필이 없으면 첫 번째 프로필을 기본으로 설정
+                val firstProfileQuery = firestore.collection(PROFILES_COLLECTION)
+                    .whereEqualTo("userId", userId)
+                    .whereEqualTo("isActive", true)
+                    .orderBy("createdAt")
+                    .limit(1)
+                    .get()
+                    .await()
+                
+                if (!firstProfileQuery.isEmpty) {
+                    val firstProfile = firstProfileQuery.documents.first()
+                    val firstProfileId = firstProfile.id
+                    
+                    // 첫 번째 프로필을 기본으로 설정
+                    firestore.collection(PROFILES_COLLECTION)
+                        .document(firstProfileId)
+                        .update("isDefault", true)
+                        .await()
+                    
+                    logd("첫 번째 프로필을 기본 프로필로 설정: $firstProfileId")
+                } else {
+                    logd("설정할 프로필이 없습니다.")
+                }
+            } else {
+                logd("기본 프로필이 이미 존재합니다.")
+            }
             
-            Result.success(hasProfile)
+            Result.success(Unit)
             
         } catch (e: Exception) {
-            logd("프로필 존재 여부 확인 실패: ${e.message}")
+            logd("기본 프로필 확인/설정 실패: ${e.message}")
             Result.failure(e)
         }
     }

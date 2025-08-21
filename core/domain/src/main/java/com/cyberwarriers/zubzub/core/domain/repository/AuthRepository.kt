@@ -97,4 +97,11 @@ interface AuthRepository {
      * @return 프로필 존재 여부
      */
     suspend fun hasUserProfile(): Result<Boolean>
+    
+    /**
+     * 기본 프로필이 없는 경우 첫 번째 프로필을 기본으로 설정합니다.
+     * 
+     * @return 설정 결과
+     */
+    suspend fun ensurePrimaryProfileExists(): Result<Unit>
 }
