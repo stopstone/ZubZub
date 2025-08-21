@@ -4,7 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cyberwarriers.zubzub.core.util.Constants
 import com.cyberwarriers.zubzub.core.util.logd
-import com.cyberwarriers.zubzub.core.domain.repository.AuthRepository
+import com.cyberwarriers.zubzub.core.domain.usecase.CheckLoginFromDataStoreUseCase
+import com.cyberwarriers.zubzub.core.domain.usecase.CheckUserProfileUseCase
 import com.cyberwarriers.zubzub.feature.splash.presentation.effect.SplashEffect
 import com.cyberwarriers.zubzub.feature.splash.presentation.state.SplashState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,7 +19,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SplashViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val checkLoginFromDataStoreUseCase: CheckLoginFromDataStoreUseCase,
+    private val checkUserProfileUseCase: CheckUserProfileUseCase
 ) : ViewModel() {
 
     // State 관리
@@ -44,7 +46,7 @@ class SplashViewModel @Inject constructor(
                 delay(Constants.SPLASH_SCREEN_DURATION)
                 
                 // DataStore에서 로그인 상태 확인
-                val isLoggedIn = authRepository.isUserLoggedInFromDataStore().first()
+                val isLoggedIn = checkLoginFromDataStoreUseCase().first()
                 
                 logd("DataStore 로그인 상태 확인: $isLoggedIn")
                 
@@ -70,13 +72,14 @@ class SplashViewModel @Inject constructor(
      * 사용자 프로필 존재 여부를 확인하고 적절한 화면으로 네비게이션
      */
     private suspend fun checkUserProfileAndNavigate() {
-        authRepository.hasUserProfile()
+        checkUserProfileUseCase()
             .onSuccess { hasProfile ->
-                _state.value = SplashState.Loaded
                 if (hasProfile) {
+                    _state.value = SplashState.Loaded
                     _effect.value = SplashEffect.NavigateToHome
                     logd("기존 사용자 - 홈 화면으로 이동")
                 } else {
+                    _state.value = SplashState.Loaded
                     _effect.value = SplashEffect.NavigateToProfileCreate
                     logd("새 사용자 - 프로필 생성 화면으로 이동")
                 }
