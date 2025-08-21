@@ -41,22 +41,13 @@ fun ProfileImageSelector(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
     ) {
-        // 프로필 이미지 레이블
-        Text(
-            text = "프로필 이미지",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        
         // 프로필 이미지 영역
         Box(
             modifier = Modifier
-                .size(120.dp)
+                .size(180.dp)
                 .clip(CircleShape)
                 .border(
-                    width = 2.dp,
+                    width = 1.dp,
                     color = MaterialTheme.colorScheme.outline,
                     shape = CircleShape
                 )
@@ -64,7 +55,7 @@ fun ProfileImageSelector(
                 .clickable { onImageClick() },
             contentAlignment = Alignment.Center
         ) {
-            if (profileImageUrl.isNotEmpty()) {
+            if (profileImageUrl.isNullOrEmpty()) {
                 // 선택된 이미지 표시
                 AsyncImage(
                     model = profileImageUrl,
@@ -77,7 +68,7 @@ fun ProfileImageSelector(
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = "기본 프로필 이미지",
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(64.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
