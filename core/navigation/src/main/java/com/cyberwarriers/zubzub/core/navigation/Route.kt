@@ -1,5 +1,7 @@
 package com.cyberwarriers.zubzub.core.navigation
 
+import java.net.URLEncoder
+
 object Route {
     // 스플래시
     const val Splash = "splash"
@@ -12,8 +14,8 @@ object Route {
     
     // 프로필 생성 네비게이션 (선택된 이미지 URI 포함)
     fun profileCreate(selectedImageUri: String? = null): String {
-        return if (selectedImageUri != null) {
-            "profile_create?selectedImageUri=$selectedImageUri"
+        return if (selectedImageUri != null && selectedImageUri.isNotEmpty()) {
+            "profile_create?selectedImageUri=${URLEncoder.encode(selectedImageUri, "UTF-8")}"
         } else {
             "profile_create"
         }
@@ -25,7 +27,7 @@ object Route {
     // 이미지 선택 네비게이션 (현재 이미지 URI 포함)
     fun imagePicker(currentImageUri: String? = null): String {
         return if (currentImageUri != null) {
-            "image_picker?currentImageUri=${java.net.URLEncoder.encode(currentImageUri, "UTF-8")}"
+            "image_picker?currentImageUri=${URLEncoder.encode(currentImageUri, "UTF-8")}"
         } else {
             "image_picker"
         }
