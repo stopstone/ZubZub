@@ -103,7 +103,7 @@ class ProfileCreateViewModel @Inject constructor(
             profileImageUri = currentUiState.profileImageUrl
         )
             .onSuccess { profile ->
-                _state.value = ProfileCreateState.Success
+                // 상태를 Success로 변경하지 않고 Loading 상태 유지하면서 바로 홈으로 이동
                 _effect.value = ProfileCreateEffect.NavigateToHome
                 logd("프로필 생성 성공: ${profile.profileName}")
             }

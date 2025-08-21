@@ -120,11 +120,6 @@ fun ProfileCreateScreen(
             }
             null -> {} // 이펙트 없음
         }
-        
-        // 이펙트 소비
-        if (effect != null) {
-            viewModel.consumeEffect()
-        }
     }
     
     // 로딩 상태 처리
