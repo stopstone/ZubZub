@@ -17,11 +17,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,22 +37,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubInputTextField
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubLoadingProgress
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubSubmitButton
+import com.cyberwarriers.zubzub.core.ui.components.ZubZubTopAppBar
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.core.util.logd
 import com.cyberwarriers.zubzub.feature.profile.presentation.ProfileCreateViewModel
 import com.cyberwarriers.zubzub.feature.profile.presentation.components.ProfileImageSelector
 import com.cyberwarriers.zubzub.feature.profile.presentation.effect.ProfileCreateEffect
 import com.cyberwarriers.zubzub.feature.profile.presentation.state.ProfileCreateState
+import com.cyberwarriers.zubzub.feature.profile.presentation.state.ProfileCreateUiState
 
 /**
  * 프로필 생성 화면
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileCreateScreen(
-    onNavigateToHome: () -> Unit = {},
-    onNavigateToImagePicker: () -> Unit = {},
     selectedImageUri: String? = null,
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToImagePicker: (String?) -> Unit = {},
     viewModel: ProfileCreateViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -62,13 +61,24 @@ fun ProfileCreateScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val effect by viewModel.effect.collectAsStateWithLifecycle()
     
+    // Navigation Arguments에서 선택된 이미지 URI가 변경되면 ViewModel 업데이트
+    LaunchedEffect(selectedImageUri) {
+        selectedImageUri?.let { uri ->
+            if (uri.isNotEmpty()) {
+                logd("Navigation Arguments에서 ViewModel로 이미지 URI 전달: $uri")
+                viewModel.updateProfileImageUrl(uri)
+            }
+        }
+    }
+
     // 권한 요청 런처
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
             logd("갤러리 권한 허용됨 - 이미지 선택 화면으로 이동")
-            onNavigateToImagePicker()
+            // 현재 선택된 이미지 URI를 전달
+            onNavigateToImagePicker(uiState.profileImageUrl.takeIf { it.isNotEmpty() })
         } else {
             logd("갤러리 권한 거부됨")
         }
@@ -85,21 +95,12 @@ fun ProfileCreateScreen(
         when (ContextCompat.checkSelfPermission(context, permission)) {
             PackageManager.PERMISSION_GRANTED -> {
                 logd("갤러리 권한 이미 허용됨 - 이미지 선택 화면으로 이동")
-                onNavigateToImagePicker()
+                // 현재 선택된 이미지 URI를 전달
+                onNavigateToImagePicker(uiState.profileImageUrl.takeIf { it.isNotEmpty() })
             }
             else -> {
                 logd("갤러리 권한 요청")
                 permissionLauncher.launch(permission)
-            }
-        }
-    }
-    
-    // 선택된 이미지 URI가 변경되면 ViewModel 업데이트
-    LaunchedEffect(selectedImageUri) {
-        selectedImageUri?.let { uri ->
-            if (uri.isNotEmpty()) {
-                viewModel.updateProfileImageUrl(uri)
-                logd("선택된 이미지 적용: $uri")
             }
         }
     }
@@ -132,15 +133,37 @@ fun ProfileCreateScreen(
         return
     }
     
+    ProfileCreateContent(
+        uiState = uiState,
+        state = state,
+        onImageClick = {
+            logd("프로필 이미지 클릭 - 권한 체크 시작, 현재 이미지: ${uiState.profileImageUrl}")
+            checkAndRequestPermission()
+        },
+        onProfileNameChange = viewModel::updateProfileName,
+        onCreateClick = {
+            logd("프로필 생성 버튼 클릭")
+            viewModel.createProfile()
+        }
+    )
+}
+
+/**
+ * 프로필 생성 화면 Content
+ * ViewModel 없이 State만으로 구성하여 프리뷰 지원
+ */
+@Composable
+fun ProfileCreateContent(
+    uiState: ProfileCreateUiState,
+    state: ProfileCreateState,
+    onImageClick: () -> Unit = {},
+    onProfileNameChange: (String) -> Unit = {},
+    onCreateClick: () -> Unit = {}
+) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "프로필 생성",
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+            ZubZubTopAppBar(
+                title = "프로필 생성"
             )
         }
     ) { paddingValues ->
@@ -176,10 +199,7 @@ fun ProfileCreateScreen(
             // 프로필 이미지 선택
             ProfileImageSelector(
                 profileImageUrl = uiState.profileImageUrl,
-                onImageClick = {
-                    logd("프로필 이미지 클릭 - 권한 체크 시작")
-                    checkAndRequestPermission()
-                },
+                onImageClick = onImageClick
             )
             
             Spacer(modifier = Modifier.height(32.dp))
@@ -187,7 +207,7 @@ fun ProfileCreateScreen(
             // 프로필 이름 입력
             ZubZubInputTextField(
                 value = uiState.profileName,
-                onValueChange = viewModel::updateProfileName,
+                onValueChange = onProfileNameChange,
                 label = "프로필 이름",
                 placeholder = "프로필 이름을 입력하세요 (20글자 이하)",
                 isError = uiState.isProfileNameError,
@@ -227,7 +247,7 @@ fun ProfileCreateScreen(
                     )
                 ) {
                     Text(
-                        text = (state as ProfileCreateState.Error).message,
+                        text = state.message,
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         modifier = Modifier.padding(16.dp),
                         textAlign = TextAlign.Center
@@ -238,10 +258,7 @@ fun ProfileCreateScreen(
             // 프로필 생성 버튼
             ZubZubSubmitButton(
                 text = "프로필 생성",
-                onClick = {
-                    logd("프로필 생성 버튼 클릭")
-                    viewModel.createProfile()
-                },
+                onClick = onCreateClick,
                 enable = uiState.isSubmitButtonEnabled(),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -251,7 +268,47 @@ fun ProfileCreateScreen(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "기본 상태")
+@Composable
+fun ProfileCreateContentPreview() {
+    ZubZubTheme {
+        ProfileCreateContent(
+            uiState = ProfileCreateUiState(),
+            state = ProfileCreateState.Initial
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "입력된 상태")
+@Composable
+fun ProfileCreateContentFilledPreview() {
+    ZubZubTheme {
+        ProfileCreateContent(
+            uiState = ProfileCreateUiState(
+                profileName = "김개발자",
+                profileImageUrl = "https://example.com/profile.jpg"
+            ),
+            state = ProfileCreateState.Initial
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "에러 상태")
+@Composable
+fun ProfileCreateContentErrorPreview() {
+    ZubZubTheme {
+        ProfileCreateContent(
+            uiState = ProfileCreateUiState(
+                profileName = "아주아주아주아주아주긴이름이스무글자넘음",
+                isProfileNameError = true,
+                profileNameErrorMessage = "프로필 이름은 20글자 이하로 입력해주세요."
+            ),
+            state = ProfileCreateState.Error("네트워크 오류가 발생했습니다.")
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "전체 화면")
 @Composable
 fun ProfileCreateScreenPreview() {
     ZubZubTheme {

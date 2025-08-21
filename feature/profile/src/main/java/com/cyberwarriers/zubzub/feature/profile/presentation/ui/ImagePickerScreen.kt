@@ -50,6 +50,7 @@ import com.cyberwarriers.zubzub.feature.profile.presentation.ImagePickerViewMode
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImagePickerScreen(
+    currentSelectedImageUri: String? = null,
     onImageSelected: (String) -> Unit = {},
     onBackClick: () -> Unit = {},
     viewModel: ImagePickerViewModel = hiltViewModel(),
@@ -102,11 +103,19 @@ fun ImagePickerScreen(
         }
     }
     
-    // 첫 번째 이미지를 기본 선택으로 설정
-    LaunchedEffect(lazyPagingItems.itemCount) {
-        if (lazyPagingItems.itemCount > 0 && selectedImageUri == null && hasPermission) {
-            lazyPagingItems.peek(0)?.let { firstImage ->
-                viewModel.setFirstImageAsDefault(firstImage)
+    // 현재 선택된 이미지가 있으면 설정, 없으면 첫 번째 이미지를 기본 선택
+    LaunchedEffect(currentSelectedImageUri, lazyPagingItems.itemCount) {
+        if (hasPermission) {
+            if (currentSelectedImageUri != null && currentSelectedImageUri.isNotEmpty()) {
+                // 현재 선택된 이미지가 있으면 해당 이미지를 선택
+                viewModel.selectImage(currentSelectedImageUri)
+                logd("현재 선택된 이미지 적용: $currentSelectedImageUri")
+            } else if (lazyPagingItems.itemCount > 0 && selectedImageUri == null) {
+                // 선택된 이미지가 없으면 첫 번째 이미지를 기본 선택
+                lazyPagingItems.peek(0)?.let { firstImage ->
+                    viewModel.setFirstImageAsDefault(firstImage)
+                    logd("첫 번째 이미지를 기본 선택으로 설정: $firstImage")
+                }
             }
         }
     }
