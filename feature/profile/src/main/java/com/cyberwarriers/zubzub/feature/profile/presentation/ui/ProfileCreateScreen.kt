@@ -1,17 +1,39 @@
 package com.cyberwarriers.zubzub.feature.profile.presentation.ui
 
-import androidx.compose.foundation.layout.*
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cyberwarriers.zubzub.core.ui.components.ZubZubInputTextField
@@ -31,11 +53,56 @@ import com.cyberwarriers.zubzub.feature.profile.presentation.state.ProfileCreate
 @Composable
 fun ProfileCreateScreen(
     onNavigateToHome: () -> Unit = {},
+    onNavigateToImagePicker: () -> Unit = {},
+    selectedImageUri: String? = null,
     viewModel: ProfileCreateViewModel = hiltViewModel(),
 ) {
+    val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val effect by viewModel.effect.collectAsStateWithLifecycle()
+    
+    // 권한 요청 런처
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            logd("갤러리 권한 허용됨 - 이미지 선택 화면으로 이동")
+            onNavigateToImagePicker()
+        } else {
+            logd("갤러리 권한 거부됨")
+        }
+    }
+    
+    // 권한 체크 함수
+    fun checkAndRequestPermission() {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+        
+        when (ContextCompat.checkSelfPermission(context, permission)) {
+            PackageManager.PERMISSION_GRANTED -> {
+                logd("갤러리 권한 이미 허용됨 - 이미지 선택 화면으로 이동")
+                onNavigateToImagePicker()
+            }
+            else -> {
+                logd("갤러리 권한 요청")
+                permissionLauncher.launch(permission)
+            }
+        }
+    }
+    
+    // 선택된 이미지 URI가 변경되면 ViewModel 업데이트
+    LaunchedEffect(selectedImageUri) {
+        selectedImageUri?.let { uri ->
+            if (uri.isNotEmpty()) {
+                viewModel.updateProfileImageUrl(uri)
+                logd("선택된 이미지 적용: $uri")
+            }
+        }
+    }
     
     // 이펙트 처리
     LaunchedEffect(effect) {
@@ -110,9 +177,9 @@ fun ProfileCreateScreen(
             ProfileImageSelector(
                 profileImageUrl = uiState.profileImageUrl,
                 onImageClick = {
-                    // TODO: 이미지 선택 기능 구현
-                    logd("프로필 이미지 선택 클릭")
-                }
+                    logd("프로필 이미지 클릭 - 권한 체크 시작")
+                    checkAndRequestPermission()
+                },
             )
             
             Spacer(modifier = Modifier.height(32.dp))
