@@ -1,14 +1,16 @@
 package com.cyberwarriers.zubzub.feature.profile.presentation.ui
 
-import android.content.ContentUris
-import android.provider.MediaStore
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,35 +21,92 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import coil3.compose.rememberAsyncImagePainter
+import com.cyberwarriers.zubzub.core.ui.components.ZubZubLoadingProgress
 import com.cyberwarriers.zubzub.core.ui.theme.ZubZubTheme
 import com.cyberwarriers.zubzub.core.util.logd
+import com.cyberwarriers.zubzub.feature.profile.data.datasource.GalleryPermissionException
+import com.cyberwarriers.zubzub.feature.profile.presentation.ImagePickerViewModel
 
 /**
- * 이미지 선택 화면
+ * 페이징 적용된 이미지 선택 화면
  * 
- * 상단에는 선택된 이미지를 큰 화면으로 보여주고,
- * 하단에는 갤러리의 이미지들을 3열 그리드로 표시
+ * 주요 기능:
+ * - Paging 3를 사용한 메모리 효율적인 갤러리 로드
+ * - 권한 관리 및 에러 처리
+ * - 로딩 상태 및 사용자 피드백
+ * - Clean Architecture 적용
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImagePickerScreen(
     onImageSelected: (String) -> Unit = {},
     onBackClick: () -> Unit = {},
+    viewModel: ImagePickerViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
-    var selectedImageUri by remember { mutableStateOf<String?>(null) }
-    var galleryImages by remember { mutableStateOf<List<String>>(emptyList()) }
     
-    // 갤러리 이미지 로드 (권한은 이미 프로필 생성 화면에서 확인됨)
+    // ViewModel 상태 관찰
+    val selectedImageUri by viewModel.selectedImageUri.collectAsStateWithLifecycle()
+    val hasPermission by viewModel.hasPermission.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    
+    // 페이징 데이터
+    val lazyPagingItems = viewModel.galleryImages.collectAsLazyPagingItems()
+    
+    // 권한 요청 런처
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        viewModel.onPermissionResult(granted)
+        if (granted) {
+            logd("갤러리 권한 승인됨")
+        } else {
+            logd("갤러리 권한 거부됨")
+        }
+    }
+    
+    // 권한 확인 및 요청 함수
+    fun checkAndRequestPermission() {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+        
+        when (ContextCompat.checkSelfPermission(context, permission)) {
+            PackageManager.PERMISSION_GRANTED -> {
+                viewModel.onPermissionResult(true)
+            }
+            else -> {
+                permissionLauncher.launch(permission)
+            }
+        }
+    }
+    
+    // 권한이 없으면 권한 요청
     LaunchedEffect(Unit) {
-        loadGalleryImages(context) { images ->
-            galleryImages = images
-            if (images.isNotEmpty()) {
-                selectedImageUri = images.first()
+        if (!hasPermission) {
+            checkAndRequestPermission()
+        }
+    }
+    
+    // 첫 번째 이미지를 기본 선택으로 설정
+    LaunchedEffect(lazyPagingItems.itemCount) {
+        if (lazyPagingItems.itemCount > 0 && selectedImageUri == null && hasPermission) {
+            lazyPagingItems.peek(0)?.let { firstImage ->
+                viewModel.setFirstImageAsDefault(firstImage)
             }
         }
     }
@@ -76,9 +135,10 @@ fun ImagePickerScreen(
                         onClick = {
                             selectedImageUri?.let { uri ->
                                 onImageSelected(uri)
+                                logd("이미지 선택 완료: $uri")
                             }
                         },
-                        enabled = selectedImageUri != null,
+                        enabled = selectedImageUri != null && hasPermission,
                     ) {
                         Text(
                             text = "완료",
@@ -90,6 +150,43 @@ fun ImagePickerScreen(
             )
         }
     ) { paddingValues ->
+        
+        // 권한이 없는 경우
+        if (!hasPermission) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "갤러리 접근 권한이 필요합니다",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center
+                    )
+                    
+                    Text(
+                        text = "프로필 이미지를 선택하기 위해\n갤러리 접근 권한을 허용해주세요.",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                    
+                    Button(
+                        onClick = { checkAndRequestPermission() }
+                    ) {
+                        Text("권한 요청")
+                    }
+                }
+            }
+            return@Scaffold
+        }
+        
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -103,46 +200,173 @@ fun ImagePickerScreen(
                     .background(Color.Black),
                 contentAlignment = Alignment.Center,
             ) {
-                selectedImageUri?.let { uri ->
-                    Image(
-                        painter = rememberAsyncImagePainter(uri),
-                        contentDescription = "선택된 이미지",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit,
-                    )
-                } ?: run {
-                    Text(
-                        text = "이미지를 선택해주세요",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                    )
-                }
-            }
-            
-            // 하단: 갤러리 이미지 그리드 (화면의 절반)
-
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(4.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    items(galleryImages) { imageUri ->
-                        GalleryImageItem(
-                            imageUri = imageUri,
-                            isSelected = selectedImageUri == imageUri,
-                            onImageClick = { selectedImageUri = it },
+                when {
+                    // 선택된 이미지가 있는 경우
+                    selectedImageUri != null -> {
+                        Image(
+                            painter = rememberAsyncImagePainter(selectedImageUri),
+                            contentDescription = "선택된 이미지",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Fit,
+                        )
+                    }
+                    // 초기 로딩 중인 경우
+                    lazyPagingItems.loadState.refresh is LoadState.Loading -> {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            CircularProgressIndicator(color = Color.White)
+                            Text(
+                                text = "갤러리를 불러오는 중...",
+                                color = Color.White,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
+                    // 기본 상태
+                    else -> {
+                        Text(
+                            text = "이미지를 선택해주세요",
+                            color = Color.White,
+                            fontSize = 18.sp,
                         )
                     }
                 }
-
+            }
+            
+            // 하단: 페이징된 갤러리 이미지 그리드 (화면의 절반)
+            Box(modifier = Modifier.fillMaxSize()) {
+                when {
+                    // 초기 로딩 에러
+                    lazyPagingItems.loadState.refresh is LoadState.Error -> {
+                        val error = lazyPagingItems.loadState.refresh as LoadState.Error
+                        ErrorContent(
+                            message = when (error.error) {
+                                is GalleryPermissionException -> "갤러리 접근 권한이 필요합니다"
+                                else -> "갤러리를 불러올 수 없습니다"
+                            },
+                            onRetry = { lazyPagingItems.retry() }
+                        )
+                    }
+                    // 정상 로딩
+                    else -> {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(3),
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(4.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            items(
+                                count = lazyPagingItems.itemCount,
+                                key = lazyPagingItems.itemKey { it }
+                            ) { index ->
+                                val imageUri = lazyPagingItems[index]
+                                imageUri?.let {
+                                    GalleryImageItem(
+                                        imageUri = it,
+                                        isSelected = selectedImageUri == it,
+                                        onImageClick = { uri ->
+                                            viewModel.selectImage(uri)
+                                        },
+                                    )
+                                }
+                            }
+                            
+                            // 추가 로딩 상태 처리
+                            when (lazyPagingItems.loadState.append) {
+                                is LoadState.Loading -> {
+                                    item {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                                is LoadState.Error -> {
+                                    item {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                Text(
+                                                    text = "추가 이미지 로드 실패",
+                                                    color = MaterialTheme.colorScheme.error,
+                                                    fontSize = 12.sp
+                                                )
+                                                TextButton(
+                                                    onClick = { lazyPagingItems.retry() }
+                                                ) {
+                                                    Text("재시도", fontSize = 12.sp)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                else -> {}
+                            }
+                        }
+                    }
+                }
+                
+                // 에러 메시지 스낵바
+                errorMessage?.let { message ->
+                    LaunchedEffect(message) {
+                        // 에러 메시지를 표시한 후 자동으로 제거
+                        kotlinx.coroutines.delay(3000)
+                        viewModel.clearError()
+                    }
+                }
+            }
         }
     }
 }
 
 /**
- * 갤러리 이미지 아이템
+ * 에러 상태 표시 컴포넌트
+ */
+@Composable
+private fun ErrorContent(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center
+            )
+            
+            Button(onClick = onRetry) {
+                Text("다시 시도")
+            }
+        }
+    }
+}
+
+/**
+ * 갤러리 이미지 아이템 (기존과 동일하지만 최적화)
  */
 @Composable
 private fun GalleryImageItem(
@@ -157,7 +381,12 @@ private fun GalleryImageItem(
             .clickable { onImageClick(imageUri) },
     ) {
         Image(
-            painter = rememberAsyncImagePainter(imageUri),
+            painter = rememberAsyncImagePainter(
+                model = imageUri,
+                onError = { 
+                    logd("이미지 로드 실패: $imageUri") 
+                }
+            ),
             contentDescription = "갤러리 이미지",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
@@ -169,7 +398,7 @@ private fun GalleryImageItem(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        Color.Blue.copy(alpha = 0.3f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                         RoundedCornerShape(8.dp),
                     ),
             )
@@ -180,57 +409,19 @@ private fun GalleryImageItem(
                     .padding(4.dp)
                     .size(20.dp)
                     .background(
-                        Color.Blue,
+                        MaterialTheme.colorScheme.primary,
                         RoundedCornerShape(10.dp),
                     ),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = "✓",
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                 )
             }
         }
-    }
-}
-
-/**
- * 갤러리에서 이미지 목록을 로드하는 함수
- */
-private fun loadGalleryImages(
-    context: android.content.Context,
-    onImagesLoaded: (List<String>) -> Unit,
-) {
-    try {
-        val images = mutableListOf<String>()
-        val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        val projection = arrayOf(MediaStore.Images.Media._ID)
-        val sortOrder = "${MediaStore.Images.Media.DATE_MODIFIED} DESC"
-        
-        context.contentResolver.query(
-            uri,
-            projection,
-            null,
-            null,
-            sortOrder,
-        )?.use { cursor ->
-            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
-            
-            while (cursor.moveToNext() && images.size < 100) { // 최대 100개만 로드
-                val id = cursor.getLong(idColumn)
-                val contentUri = ContentUris.withAppendedId(uri, id)
-                images.add(contentUri.toString())
-            }
-        }
-        
-        onImagesLoaded(images)
-        logd("갤러리 이미지 로드 완료: ${images.size}개")
-        
-    } catch (e: Exception) {
-        logd("갤러리 이미지 로드 실패: ${e.message}")
-        onImagesLoaded(emptyList())
     }
 }
 
